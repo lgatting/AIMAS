@@ -46,9 +46,6 @@ public abstract class Heuristic implements Comparator<Node> {
               
 		for (int row = 1; row < n.rows - 1; row++) {
 			for (int col = 1; col < n.cols - 1; col++) {
-                       
-   
-                              
 				char b = Character.toLowerCase(n.boxes[row][col]);
 				if (b > 0 && n.goals[row][col] != b) { 
 					int rowdiff = row - n.agentRow;
