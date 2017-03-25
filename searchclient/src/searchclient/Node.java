@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Random;
 
+import entities.*;
 import searchclient.Command.Type;
 
 public class Node {
@@ -13,9 +14,6 @@ public class Node {
 
 	public int rows;
 	public int cols;
-
-	public int agentRow;
-	public int agentCol;
 
 	// Arrays are indexed from the top-left of the level, with first index being row and second being column.
 	// Row 0: (0,0) (0,1) (0,2) (0,3) ...
@@ -26,10 +24,11 @@ public class Node {
 	// E.g. this.walls[2] is an array of booleans.
 	// this.walls[row][col] is true if there's a wall at (row, col)
 	//
-
-	public boolean[][] walls;
-	public char[][] boxes;
-	public char[][] goals;
+	
+	public ArrayList<Agent> agents;
+	public ArrayList<Wall> walls;
+	public ArrayList<Box> boxes;
+	public ArrayList<Goal> goals;
 
 	public Node parent;
 	public Command action;
@@ -41,9 +40,10 @@ public class Node {
 	public Node(Node parent, int rows, int cols) {
 		this.parent = parent;
 		
-		this.walls = new boolean[rows][cols];
-		this.boxes = new char[rows][cols];
-		this.goals = new char[rows][cols];
+		this.agents = new ArrayList<Agent>();
+		this.walls = new ArrayList<Wall>();
+		this.boxes = new ArrayList<Box>();
+		this.goals = new ArrayList<Goal>();
 		
 		this.rows = rows;
 		this.cols = cols;
@@ -64,13 +64,9 @@ public class Node {
 	}
 
 	public boolean isGoalState() {
-		for (int row = 1; row < this.rows - 1; row++) {
-			for (int col = 1; col < this.cols - 1; col++) {
-				char g = goals[row][col];
-				char b = Character.toLowerCase(boxes[row][col]);
-				if (g > 0 && b != g) {
-					return false;
-				}
+		for(Goal g : goals){
+			if(!boxes.contains(g)) {
+				return false;
 			}
 		}
 		return true;
@@ -78,50 +74,75 @@ public class Node {
 
 	public ArrayList<Node> getExpandedNodes() {
 		ArrayList<Node> expandedNodes = new ArrayList<Node>(Command.EVERY.length);
-		for (Command c : Command.EVERY) {
-			// Determine applicability of action
-			int newAgentRow = this.agentRow + Command.dirToRowChange(c.dir1);
-			int newAgentCol = this.agentCol + Command.dirToColChange(c.dir1);
-
-			if (c.actionType == Type.Move) {
-				// Check if there's a wall or box on the cell to which the agent is moving
-				if (this.cellIsFree(newAgentRow, newAgentCol)) {
-					Node n = this.ChildNode();
-					n.action = c;
-					n.agentRow = newAgentRow;
-					n.agentCol = newAgentCol;
-					expandedNodes.add(n);
-				}
-			} else if (c.actionType == Type.Push) {
-				// Make sure that there's actually a box to move
-				if (this.boxAt(newAgentRow, newAgentCol)) {
-					int newBoxRow = newAgentRow + Command.dirToRowChange(c.dir2);
-					int newBoxCol = newAgentCol + Command.dirToColChange(c.dir2);
-					// .. and that new cell of box is free
-					if (this.cellIsFree(newBoxRow, newBoxCol)) {
+		for(Agent agent : agents) {
+			for (Command c : Command.EVERY) {
+				// Determine applicability of action
+				int newAgentRow = agent.getRow() + Command.dirToRowChange(c.dir1);
+				int newAgentCol = agent.getCol() + Command.dirToColChange(c.dir1);
+	
+				if (c.actionType == Type.Move) {
+					// Check if there's a wall or box on the cell to which the agent is moving
+					if (this.cellIsFree(newAgentRow, newAgentCol)) {
 						Node n = this.ChildNode();
 						n.action = c;
-						n.agentRow = newAgentRow;
-						n.agentCol = newAgentCol;
-						n.boxes[newBoxRow][newBoxCol] = this.boxes[newAgentRow][newAgentCol];
-						n.boxes[newAgentRow][newAgentCol] = 0;
+					    int agentIndex = n.agents.indexOf(agent);
+					    Agent foundAgent = n.agents.get(agentIndex);	// By reference
+					    foundAgent.setRow(newAgentRow);
+						foundAgent.setCol(newAgentCol);
 						expandedNodes.add(n);
 					}
-				}
-			} else if (c.actionType == Type.Pull) {
-				// Cell is free where agent is going
-				if (this.cellIsFree(newAgentRow, newAgentCol)) {
-					int boxRow = this.agentRow + Command.dirToRowChange(c.dir2);
-					int boxCol = this.agentCol + Command.dirToColChange(c.dir2);
-					// .. and there's a box in "dir2" of the agent
-					if (this.boxAt(boxRow, boxCol)) {
-						Node n = this.ChildNode();
-						n.action = c;
-						n.agentRow = newAgentRow;
-						n.agentCol = newAgentCol;
-						n.boxes[this.agentRow][this.agentCol] = this.boxes[boxRow][boxCol];
-						n.boxes[boxRow][boxCol] = 0;
-						expandedNodes.add(n);
+				} else if (c.actionType == Type.Push) {
+					
+					//IMPLEMENT COLOR CHECK
+					
+					// Make sure that there's actually a box to move
+					if (this.boxAt(newAgentRow, newAgentCol)) {
+						int newBoxRow = newAgentRow + Command.dirToRowChange(c.dir2);
+						int newBoxCol = newAgentCol + Command.dirToColChange(c.dir2);
+						// .. and that new cell of box is free
+						if (this.cellIsFree(newBoxRow, newBoxCol)) {
+							Node n = this.ChildNode();
+							n.action = c;
+							int agentIndex = n.agents.indexOf(agent);
+							Agent foundAgent = n.agents.get(agentIndex);	// By reference
+							foundAgent.setRow(newAgentRow);
+							foundAgent.setCol(newAgentCol);
+							
+							int boxIndex = this.boxes.indexOf(new Box(newAgentRow, newAgentCol));
+							Box foundBox = this.boxes.get(boxIndex);
+							foundBox.setRow(newBoxRow);
+							foundBox.setCol(newBoxCol);							
+							//n.boxes[newBoxRow][newBoxCol] = this.boxes[newAgentRow][newAgentCol];
+							//n.boxes[newAgentRow][newAgentCol] = 0;
+							expandedNodes.add(n);
+						}
+					}
+				} else if (c.actionType == Type.Pull) {
+					
+					//IMPLEMENT COLOR CHECK
+					
+					// Cell is free where agent is going
+					if (this.cellIsFree(newAgentRow, newAgentCol)) {
+						int boxRow = agent.getRow() + Command.dirToRowChange(c.dir2);
+						int boxCol = agent.getCol() + Command.dirToColChange(c.dir2);
+						// .. and there's a box in "dir2" of the agent
+						if (this.boxAt(boxRow, boxCol)) {
+							Node n = this.ChildNode();
+							n.action = c;
+							int agentIndex = n.agents.indexOf(agent);
+							Agent foundAgent = n.agents.get(agentIndex);
+							foundAgent.setRow(newAgentRow);
+							foundAgent.setCol(newAgentCol);
+							
+							int boxIndex = this.boxes.indexOf(new Box(boxRow, boxCol));
+							Box foundBox = this.boxes.get(boxIndex);
+							foundBox.setRow(agent.getRow());
+							foundBox.setCol(agent.getCol());	
+							
+							//n.boxes[this.agentRow][this.agentCol] = this.boxes[boxRow][boxCol];
+							//n.boxes[boxRow][boxCol] = 0;
+							expandedNodes.add(n);
+						}
 					}
 				}
 			}
@@ -131,20 +152,19 @@ public class Node {
 	}
 
 	private boolean cellIsFree(int row, int col) {
-		return !this.walls[row][col] && this.boxes[row][col] == 0;
+		return this.walls.contains(new Wall(row, col));
 	}
 
 	private boolean boxAt(int row, int col) {
-		return this.boxes[row][col] > 0;
+		return this.boxes.contains(new Box(row, col));
 	}
 
 	private Node ChildNode() {
 		Node copy = new Node(this, this.rows, this.cols);
-		copy.walls = this.walls;
-		copy.goals = this.goals;
-		for (int row = 0; row < this.rows; row++) {
-			System.arraycopy(this.boxes[row], 0, copy.boxes[row], 0, this.cols);
-		}
+		copy.agents = new ArrayList<>(this.agents);
+		copy.walls = new ArrayList<>(this.walls);
+		copy.boxes = new ArrayList<>(this.boxes);
+		copy.goals = new ArrayList<>(this.goals);
 		return copy;
 	}
 
@@ -172,6 +192,15 @@ public class Node {
 		}
 		return this._hash;
 	}
+	
+	public boolean listsAreEqual(ArrayList<?> list1, ArrayList<?> list2){		
+		for(int i = 0; i < list1.size(); i++){
+			if(!list2.contains(list1.get(i))){
+				return false;
+			}
+		}
+		return true;
+	}
 
 	@Override
 	public boolean equals(Object obj) {
@@ -184,11 +213,11 @@ public class Node {
 		Node other = (Node) obj;
 		if (this.agentRow != other.agentRow || this.agentCol != other.agentCol)
 			return false;
-		if (!Arrays.deepEquals(this.boxes, other.boxes))
+		if (!listsAreEqual(this.boxes, other.boxes))
 			return false;
-		if (!Arrays.deepEquals(this.goals, other.goals))
+		if (!listsAreEqual(this.goals, other.goals))
 			return false;
-		if (!Arrays.deepEquals(this.walls, other.walls))
+		if (!listsAreEqual(this.walls, other.walls))
 			return false;
 		return true;
 	}

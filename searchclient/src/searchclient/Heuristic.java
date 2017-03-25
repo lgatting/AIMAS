@@ -37,11 +37,12 @@ public abstract class Heuristic implements Comparator<Node> {
 		double closestBox = 0;
 		double goalToBoxDistances = 0;
 		double boxesNotSatisfied = goals.size();
+		double closestDistToGoalFromAgent = -1;
 		
-                char c = Character.toLowerCase(n.goals[n.agentRow][n.agentCol]);
-				if (c > 0) { // prevent agent to step over a goal
-                                    return 10000000 ;
-                                }
+	    char c = Character.toLowerCase(n.goals[n.agentRow][n.agentCol]);
+		if (c > 0) { // prevent agent to step over a goal
+	        return 10000000 ;
+	    }
                                
               
 		for (int row = 1; row < n.rows - 1; row++) {
@@ -62,6 +63,10 @@ public abstract class Heuristic implements Comparator<Node> {
 					for (int[] goalPos : goals) {
 						int gr = goalPos[0];
 						int gc = goalPos[1];
+						double distFromAToG = Math.abs(gr - n.agentRow) + Math.abs(gc - n.agentCol);
+						if(closestDistToGoalFromAgent == -1 || closestDistToGoalFromAgent > distFromAToG) {
+							closestDistToGoalFromAgent = distance;
+						}
 						char goalChar = n.goals[gr][gc];
 						
 						if (goalChar == b) {
@@ -125,8 +130,7 @@ public abstract class Heuristic implements Comparator<Node> {
     //exception handling left as an exercise for the reader
 }
      */
-                
-		return (int)Math.round(goalToBoxDistances + closestBox + boxesNotSatisfied );
+		return (int)Math.round(goalToBoxDistances + closestBox + boxesNotSatisfied + closestDistToGoalFromAgent);
 	}
 
 	public abstract int f(Node n);

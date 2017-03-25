@@ -113,6 +113,17 @@ public class SearchClient {
 
 		// Read level and create the initial state of the problem
 		SearchClient client = new SearchClient(serverMessages);
+		
+		while(true){
+			String message = "[Move(S)]";
+			
+			System.out.println(message);
+			
+			String fileline = serverMessages.readLine();
+			
+			System.err.println(fileline);
+		}
+		
 
 		
         Strategy strategy;
@@ -143,6 +154,9 @@ public class SearchClient {
             System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
         }
 
+        
+        
+        
 		LinkedList<Node> solution;
 		try {
 			solution = client.Search(strategy);
