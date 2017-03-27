@@ -1,16 +1,14 @@
 package entities;
 
-public class Box extends Element {	
-	public static enum Color {
-		Blue, Red, Green, Cyan, Magenta, Orange, Pink, Yellow
-	};
-	
+public class Box extends ElementWithColor {	
 	private char letter;
 	private Color color;
 	private boolean locked;
 
-	public Box(int row, int col) {
+	public Box(int row, int col, char letter, Color color) {
 		super(row,col);
+		this.letter = letter;
+		this.color = color;
 	}
 
 	public Box(Box toCopy) {
@@ -24,16 +22,8 @@ public class Box extends Element {
 		return letter;
 	}
 	
-	public void setLetter(char letter) {
-		this.letter = letter;
-	}
-	
 	public Color getColor() {
 		return color;
-	}
-	
-	public void setColor(Color color) {
-		this.color = color;
 	}
 	
 	public boolean isLocked() {

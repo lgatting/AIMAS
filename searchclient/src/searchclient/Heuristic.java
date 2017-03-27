@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import entities.*;
 import searchclient.NotImplementedException;
 
 public abstract class Heuristic implements Comparator<Node> {
@@ -21,15 +22,10 @@ public abstract class Heuristic implements Comparator<Node> {
 
 		goals = new ArrayList<int[]>();
 		
-		for (int row = 1; row < initialState.rows - 1; row++) {
-			for (int col = 1; col < initialState.cols - 1; col++) {
-				char g = initialState.goals[row][col];
-				if (g > 0) {
-					int[] pos = {row, col, 0};
-					
-					goals.add(pos);
-				}
-			}
+		for (Goal goal : initialState.goals) {
+			int[] pos = {goal.getRow(), goal.getCol(), 0};
+			
+			goals.add(pos);
 		}
 	}
 

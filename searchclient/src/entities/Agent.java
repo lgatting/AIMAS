@@ -1,38 +1,27 @@
 package entities;
 
-import entities.Box.Color;
-
-public class Agent extends Element {
-	public static enum Color {
-		Blue, Red, Green, Cyan, Magenta, Orange, Pink, Yellow
-	};
-	
-	private int number;
+public class Agent extends ElementWithColor {
+	private int agentNo;
 	private Color color;
 	
-	public Agent(int row, int col) {
+	public Agent(int row, int col, int agentNo, Color color) {
 		super(row, col);
+		this.agentNo = agentNo;
+		this.color = color;
 	}
 	
 	public Agent(Agent toCopy){
 		super(toCopy.getRow(),toCopy.getCol());
-		this.number = toCopy.getNumber();
+		this.agentNo = toCopy.getNumber();
 		this.color = toCopy.getColor();
 	}
 	
 	public int getNumber() {
-		return number;
-	}
-
-	public void setNumber(int number) {
-		this.number = number;
+		return agentNo;
 	}
 
 	public Color getColor() {
 		return color;
 	}
 
-	public void setColor(Color color) {
-		this.color = color;
-	}
 }

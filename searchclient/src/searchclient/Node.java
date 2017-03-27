@@ -41,9 +41,9 @@ public class Node {
 		this.parent = parent;
 		
 		this.agents = new ArrayList<Agent>();
-		this.walls = new ArrayList<Wall>();
 		this.boxes = new ArrayList<Box>();
 		this.goals = new ArrayList<Goal>();
+		this.walls = new ArrayList<Wall>();
 		
 		this.rows = rows;
 		this.cols = cols;
@@ -108,7 +108,7 @@ public class Node {
 							foundAgent.setRow(newAgentRow);
 							foundAgent.setCol(newAgentCol);
 							
-							int boxIndex = this.boxes.indexOf(new Box(newAgentRow, newAgentCol));
+							int boxIndex = this.boxes.indexOf(new Element(newAgentRow, newAgentCol));
 							Box foundBox = this.boxes.get(boxIndex);
 							foundBox.setRow(newBoxRow);
 							foundBox.setCol(newBoxCol);							
@@ -134,7 +134,7 @@ public class Node {
 							foundAgent.setRow(newAgentRow);
 							foundAgent.setCol(newAgentCol);
 							
-							int boxIndex = this.boxes.indexOf(new Box(boxRow, boxCol));
+							int boxIndex = this.boxes.indexOf(new Element(boxRow, boxCol));
 							Box foundBox = this.boxes.get(boxIndex);
 							foundBox.setRow(agent.getRow());
 							foundBox.setCol(agent.getCol());	
@@ -152,11 +152,12 @@ public class Node {
 	}
 
 	private boolean cellIsFree(int row, int col) {
-		return this.walls.contains(new Wall(row, col));
+		Element cell = new Element(row, col);
+		return !this.walls.contains(cell) && !this.boxes.contains(cell) && !this.agents.contains(cell);
 	}
 
 	private boolean boxAt(int row, int col) {
-		return this.boxes.contains(new Box(row, col));
+		return this.boxes.contains(new Element(row, col));
 	}
 
 	private Node ChildNode() {
@@ -183,11 +184,10 @@ public class Node {
 		if (this._hash == 0) {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + this.agentCol;
-			result = prime * result + this.agentRow;
-			result = prime * result + Arrays.deepHashCode(this.boxes);
-			result = prime * result + Arrays.deepHashCode(this.goals);
-			result = prime * result + Arrays.deepHashCode(this.walls);
+			result = prime * result + Arrays.deepHashCode(this.agents.toArray());
+			result = prime * result + Arrays.deepHashCode(this.boxes.toArray());
+			result = prime * result + Arrays.deepHashCode(this.goals.toArray());
+			result = prime * result + Arrays.deepHashCode(this.walls.toArray());
 			this._hash = result;
 		}
 		return this._hash;
@@ -211,8 +211,16 @@ public class Node {
 		if (this.getClass() != obj.getClass())
 			return false;
 		Node other = (Node) obj;
-		if (this.agentRow != other.agentRow || this.agentCol != other.agentCol)
+		int noOfAgents = agents.size();
+		if(noOfAgents != other.agents.size()) {
 			return false;
+		}
+		else {
+			for(int i = 0; i < noOfAgents; i++){
+				if (this.agents.get(i).getRow() != other.agents.get(i).getRow() || this.agents.get(i).getCol() != other.agents.get(i).getCol())
+					return false;
+			}
+		}
 		if (!listsAreEqual(this.boxes, other.boxes))
 			return false;
 		if (!listsAreEqual(this.goals, other.goals))
@@ -225,19 +233,18 @@ public class Node {
 	@Override
 	public String toString() {
 		StringBuilder s = new StringBuilder();
-		for (int row = 0; row < this.rows; row++) {
-			if (!this.walls[row][0]) {
-				break;
-			}
-			for (int col = 0; col < this.cols; col++) {
-				if (this.boxes[row][col] > 0) {
-					s.append(this.boxes[row][col]);
-				} else if (this.goals[row][col] > 0) {
-					s.append(this.goals[row][col]);
-				} else if (this.walls[row][col]) {
+		for (int row = 0; row < this.rows; row++){
+			for(int col = 0; col < this.cols; col++){
+				Element cell = new Element(row,col);
+				int foundIndex = -1;
+				if((foundIndex = this.boxes.indexOf(cell)) != -1){	// If there is a box in the current cell
+					s.append(this.boxes.get(foundIndex).getLetter());
+				} else if ((foundIndex = this.goals.indexOf(cell)) != -1) {
+					s.append(this.goals.get(foundIndex).getLetter());
+				} else if (this.walls.contains(cell)) {
 					s.append("+");
-				} else if (row == this.agentRow && col == this.agentCol) {
-					s.append("0");
+				} else if ((foundIndex = this.agents.indexOf(cell)) != -1) {
+					s.append(this.agents.get(foundIndex).getNumber());
 				} else {
 					s.append(" ");
 				}

@@ -1,9 +1,13 @@
 package entities;
 
-public class Goal {
+public class Goal extends Element {
 	private char letter;
 	private boolean satisfied;
 	
+	public Goal(int row, int col) {
+		super(row,col);
+	}
+
 	public char getLetter() {
 		return letter;
 	}
