@@ -125,26 +125,14 @@ public class Node {
 								// .. and that new cell of box is free
 								if (this.cellIsFree(newBoxRow, newBoxCol)) {
 									Node n = this.ChildNode();
-									n.action = c;
+							
 									n.action = c;
 									n.agents[newAgentRow][newAgentCol] = agentNo;
 									n.agents[agentRow][agentCol] = -1;
 									n.boxes[newBoxRow][newBoxCol] = this.boxes[newAgentRow][newAgentCol];
 									n.boxes[newAgentRow][newAgentCol] = 0;
 									expandedNodes.add(n);
-									try {
-										String txt = "";
-										for(int agentRow1=0; agentRow1 < this.rows ; agentRow1++){
-											for(int agentCol1=0; agentCol1< this.cols ; agentCol1++){
-												txt += agents[agentRow1][agentCol1] ;
-											}
-											txt += '\n';
-											}
-							          
-							Files.write(Paths.get("log2.txt"), txt.getBytes(), StandardOpenOption.APPEND);
-							}catch (IOException e) {
-							//exception handling left as an exercise for the reader
-							}
+									
 								}
 							}
 						} else if (c.actionType == Type.Pull) {
@@ -174,7 +162,7 @@ public class Node {
 	}
 
 	private boolean cellIsFree(int row, int col) {
-		return !this.walls[row][col] && this.boxes[row][col] == 0;
+		return !this.walls[row][col] && this.boxes[row][col] == 0 && this.agents[row][col] == -1 ;
 	}
 
 	private boolean boxAt(int row, int col) {
@@ -183,13 +171,17 @@ public class Node {
 
 	private Node ChildNode() {
 		Node copy = new Node(this, this.rows, this.cols);
-		copy.agents = this.agents;
+		
 		copy.colorAssignments = this.colorAssignments;
 		copy.walls = this.walls;
 		copy.goals = this.goals;
 		for (int row = 0; row < this.rows; row++) {
 			System.arraycopy(this.boxes[row], 0, copy.boxes[row], 0, this.cols);
 		}
+		for (int row = 0; row < this.rows; row++) {
+			System.arraycopy(this.agents[row], 0, copy.agents[row], 0, this.cols);
+		}
+		
 		return copy;
 	}
 

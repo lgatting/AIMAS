@@ -119,6 +119,9 @@ public class SearchClient {
 			}
 			row++;
 		}
+		
+		
+		
 	}
 
 	public LinkedList<Node> Search(Strategy strategy) throws IOException {
