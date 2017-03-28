@@ -3,31 +3,70 @@ package searchclient;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+
 
 import searchclient.Memory;
 import searchclient.Strategy.*;
 import searchclient.Heuristic.*;
+import searchclient.ElementWithColor.*;
+
+
 
 public class SearchClient {
 	public Node initialState;
 
 	public SearchClient(BufferedReader serverMessages) throws Exception {
+		List<String> lines = new ArrayList<String>();
+	
+		
+		HashMap<Character, Color> colorAssignments = new HashMap<Character, Color>();
+		
 		// Read lines specifying colors
 		String fileline = serverMessages.readLine();
-		if (fileline.matches("^[a-z]+:\\s*[0-9A-Z](\\s*,\\s*[0-9A-Z])*\\s*$")) {
-			System.err.println("Error, client does not support colors.");
-			System.exit(1);
+		while(fileline.matches("^[a-z]+:\\s*[0-9A-Z](\\s*,\\s*[0-9A-Z])*\\s*$")){
+			lines.add(fileline);
+			fileline = serverMessages.readLine();
+		}		
+		
+		for (String line : lines) {
+			Pattern pattern = Pattern.compile("([a-z]+)");
+			Matcher matcher = pattern.matcher(line);
+			
+			if(matcher.find()){
+				String color = matcher.group(1);
+				Color cColor;
+				
+				try {
+					cColor = Color.valueOf(color);
+					
+					pattern = Pattern.compile("([0-9A-Z])");
+					matcher = pattern.matcher(line);
+					while (matcher.find()){
+						colorAssignments.put(matcher.group(1).charAt(0), cColor);
+					}
+				} catch (IllegalArgumentException e){
+					System.err.println("Invalid color");
+					System.exit(1);
+				}
+			}
 		}
-
+		lines.clear();
+		
+		// Read lines specifying the layout of the level
 		int rows = 0;
 		int cols = 0;
 		
 		int lineLength;
-		
-		List<String> lines = new ArrayList<String>();
 		
 		while (!fileline.equals("")) {
 			lineLength = fileline.length();
@@ -42,8 +81,9 @@ public class SearchClient {
 		}
 
 		int row = 0;
-		boolean agentFound = false;
+		boolean[] agentFound = new boolean[10];
 		this.initialState = new Node(null, rows, cols);
+		this.initialState.setcolormap(colorAssignments);
 
 		for (String line : lines) {
 			for (int col = 0; col < line.length(); col++) {
@@ -52,15 +92,22 @@ public class SearchClient {
 				if (chr == '+') { // Wall.
 					this.initialState.walls[row][col] = true;
 				} else if ('0' <= chr && chr <= '9') { // Agent.
-					if (agentFound) {
-						System.err.println("Error, not a single agent level");
+					
+					int agentNo = Character.getNumericValue(chr);
+					
+					if (agentFound[agentNo]) {
+						System.err.println("Error, multiple agents with the same number");
 						System.exit(1);
 					}
-					agentFound = true;
-					this.initialState.agentRow = row;
-					this.initialState.agentCol = col;
+					
+					agentFound[agentNo] = true;
+										
+					this.initialState.agents[row][col]=agentNo;
+					
+					
 				} else if ('A' <= chr && chr <= 'Z') { // Box.
 					this.initialState.boxes[row][col] = chr;
+					
 				} else if ('a' <= chr && chr <= 'z') { // Goal.
 					this.initialState.goals[row][col] = chr;
 				} else if (chr == ' ') {
@@ -162,7 +209,7 @@ public class SearchClient {
 
 			for (Node n : solution) {
 				String act = n.action.toString();
-    
+				
 				System.out.println(act);
 				String response = serverMessages.readLine();
 				if (response.contains("false")) {
