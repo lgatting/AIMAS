@@ -119,7 +119,7 @@ public class Node {
 					}
 				} else if (c.actionType == Type.Pull) {
 					
-					//IMPLEMENT COLOR CHECK
+					//IMPLEMENT COLOR CHECK!!!!!!!!
 					
 					// Cell is free where agent is going
 					if (this.cellIsFree(newAgentRow, newAgentCol)) {
