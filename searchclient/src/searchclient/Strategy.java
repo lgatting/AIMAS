@@ -159,13 +159,20 @@ public abstract class Strategy extends Thread {
                         
 		}
 
+	
+		
 		@Override
 		public Node getAndRemoveLeaf() {
 			Node n = frontier.poll();
+			
+	
+		
 			frontierSet.remove(n);
                      
 			return n;
 		}
+		
+		
 
                 /*
                 public boolean agentONgoal(Node n){

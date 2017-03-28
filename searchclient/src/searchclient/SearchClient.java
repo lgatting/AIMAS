@@ -3,6 +3,9 @@ package searchclient;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -10,17 +13,22 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import entities.*;
-import entities.ElementWithColor.Color;
+
+
 import searchclient.Memory;
 import searchclient.Strategy.*;
 import searchclient.Heuristic.*;
+import searchclient.ElementWithColor.*;
+
+
 
 public class SearchClient {
 	public Node initialState;
 
 	public SearchClient(BufferedReader serverMessages) throws Exception {
 		List<String> lines = new ArrayList<String>();
+	
+		
 		HashMap<Character, Color> colorAssignments = new HashMap<Character, Color>();
 		
 		// Read lines specifying colors
@@ -75,13 +83,16 @@ public class SearchClient {
 		int row = 0;
 		boolean[] agentFound = new boolean[10];
 		this.initialState = new Node(null, rows, cols);
+		this.initialState.setcolormap(colorAssignments);
 
 		for (String line : lines) {
 			for (int col = 0; col < line.length(); col++) {
 				char chr = line.charAt(col);
+
 				if (chr == '+') { // Wall.
-					this.initialState.walls.add(new Wall(row,col));
+					this.initialState.walls[row][col] = true;
 				} else if ('0' <= chr && chr <= '9') { // Agent.
+					
 					int agentNo = Character.getNumericValue(chr);
 					
 					if (agentFound[agentNo]) {
@@ -90,35 +101,27 @@ public class SearchClient {
 					}
 					
 					agentFound[agentNo] = true;
+										
+					this.initialState.agents[row][col]=agentNo;
 					
-					Color agentColor = colorAssignments.get((char) (agentNo+'0'));
-					if(agentColor == null){
-						agentColor = Color.blue;
-					}
 					
-					this.initialState.agents.add(new Agent(row, col, agentNo, agentColor));
-				}
-				else if ('A' <= chr && chr <= 'Z') { // Box.
-					Color boxColor = colorAssignments.get(chr);
-					if(boxColor == null){
-						boxColor = Color.blue;
-					}
+				} else if ('A' <= chr && chr <= 'Z') { // Box.
+					this.initialState.boxes[row][col] = chr;
 					
-					this.initialState.boxes.add(new Box(row, col, chr, boxColor));
-				}
-				else if ('a' <= chr && chr <= 'z') { // Goal.
-					this.initialState.goals.add(new Goal(row,col));
-				}
-				else if (chr == ' ') {
+				} else if ('a' <= chr && chr <= 'z') { // Goal.
+					this.initialState.goals[row][col] = chr;
+				} else if (chr == ' ') {
 					// Free space.
-				}
-				else {
+				} else {
 					System.err.println("Error, read invalid level character: " + (int) chr);
 					System.exit(1);
 				}
 			}
 			row++;
 		}
+		
+		
+		
 	}
 
 	public LinkedList<Node> Search(Strategy strategy) throws IOException {
@@ -160,17 +163,6 @@ public class SearchClient {
 
 		// Read level and create the initial state of the problem
 		SearchClient client = new SearchClient(serverMessages);
-		
-//		while(true){
-//			String message = "[Move(S)]";
-//			
-//			System.out.println(message);
-//			
-//			String fileline = serverMessages.readLine();
-//			
-//			System.err.println(fileline);
-//		}
-		
 
 		
         Strategy strategy;
@@ -201,9 +193,6 @@ public class SearchClient {
             System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
         }
 
-        
-        
-        
 		LinkedList<Node> solution;
 		try {
 			solution = client.Search(strategy);
@@ -223,7 +212,7 @@ public class SearchClient {
 
 			for (Node n : solution) {
 				String act = n.action.toString();
-    
+				
 				System.out.println(act);
 				String response = serverMessages.readLine();
 				if (response.contains("false")) {
