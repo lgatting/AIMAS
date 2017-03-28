@@ -1,0 +1,1 @@
+-l levels/SAsoko3_24.lvl -c "java -classpath build/classes -Xmx2g searchclient.SearchClient -greedy" -g 500 -t 300
