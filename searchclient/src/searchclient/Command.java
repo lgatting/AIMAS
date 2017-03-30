@@ -84,9 +84,9 @@ public class Command {
 	public String toString() {
 		if (this.actionType == Type.Move) {
                //  System.out.println("my ln"+String.format("[%s(%s)]", this.actionType.toString(), this.dir1.toString()));
-			return String.format("[%s(%s)]", this.actionType.toString(), this.dir1.toString());
+			return String.format("%s(%s)", this.actionType.toString(), this.dir1.toString());
                 } else{
                    // System.out.println("my ln"+String.format("[%s(%s,%s)]", this.actionType.toString(), this.dir1.toString(), this.dir2.toString()));
-			return String.format("[%s(%s,%s)]", this.actionType.toString(), this.dir1.toString(), this.dir2.toString());
+			return String.format("%s(%s,%s)", this.actionType.toString(), this.dir1.toString(), this.dir2.toString());
 	}}
 }

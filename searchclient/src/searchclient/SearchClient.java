@@ -24,6 +24,7 @@ import searchclient.ElementWithColor.*;
 
 public class SearchClient {
 	public Node initialState;
+	public static int agentCount;
 
 	public SearchClient(BufferedReader serverMessages) throws Exception {
 		List<String> lines = new ArrayList<String>();
@@ -82,8 +83,30 @@ public class SearchClient {
 
 		int row = 0;
 		boolean[] agentFound = new boolean[10];
-		this.initialState = new Node(null, rows, cols);
+		
+		for (String line : lines) {
+			for (int col = 0; col < line.length(); col++) {
+				char chr = line.charAt(col);
+				if ('0' <= chr && chr <= '9') { // Agent.
+					
+					int agentNo = Character.getNumericValue(chr);
+					
+					if (agentFound[agentNo]) {
+						System.err.println("Error, multiple agents with the same number");
+						System.exit(1);
+					}
+					
+					agentFound[agentNo] = true;
+					agentCount++;
+				}
+			}
+			row++;
+		}
+		
+		this.initialState = new Node(null, rows, cols, agentCount);
 		this.initialState.setcolormap(colorAssignments);
+		
+		row = 0;
 
 		for (String line : lines) {
 			for (int col = 0; col < line.length(); col++) {
@@ -95,15 +118,8 @@ public class SearchClient {
 					
 					int agentNo = Character.getNumericValue(chr);
 					
-					if (agentFound[agentNo]) {
-						System.err.println("Error, multiple agents with the same number");
-						System.exit(1);
-					}
-					
-					agentFound[agentNo] = true;
-										
-					this.initialState.agents[row][col]=agentNo;
-					
+					this.initialState.agents[agentNo][0] = row;
+					this.initialState.agents[agentNo][1] = col;
 					
 				} else if ('A' <= chr && chr <= 'Z') { // Box.
 					this.initialState.boxes[row][col] = chr;
@@ -146,9 +162,27 @@ public class SearchClient {
 			}
 
 			strategy.addToExplored(leafNode);
+			
+			//System.err.println(leafNode.actions[0].toString() + "," + leafNode.actions[1].toString());
+			
 			for (Node n : leafNode.getExpandedNodes()) { // The list of expanded nodes is shuffled randomly; see Node.java.
-				if (!strategy.isExplored(n) && !strategy.inFrontier(n)) {
+				
+				System.err.println(!strategy.isExplored(n) + "," + !strategy.inFrontier(n));
+				if (!strategy.isExplored(n) && !strategy.inFrontier(n)) {	// THE CURRENT PROBLEM IS HERE!!!!!
+					//System.err.println(n.agents[0][0] + "," + n.agents[0][1]);
 					strategy.addToFrontier(n);
+					try{
+						System.err.print(n.actions[0].toString());
+					}
+					 catch(NullPointerException e){
+						 System.err.print("NoOp"); 
+					 }
+					try{
+						System.err.println(n.actions[1].toString());
+					}
+					 catch(NullPointerException e){
+						 System.err.println("NoOp"); 
+					 }
 				}
 			}
 			iterations++;
@@ -211,7 +245,24 @@ public class SearchClient {
 			System.err.println(strategy.searchStatus());
 
 			for (Node n : solution) {
-				String act = n.action.toString();
+				
+				System.err.println(agentCount);
+				String act = "[";
+				try{
+					act += n.actions[0].toString();
+				}
+				 catch(NullPointerException e){
+					act += "NoOp"; 
+				 }
+				for(int i = 1; i < n.agentCount; i++){
+					try{
+						act += "," + n.actions[i].toString();
+					}
+					 catch(NullPointerException e){
+						act += ",NoOp"; 
+					 }
+				}
+				act += "]";
 				
 				System.out.println(act);
 				String response = serverMessages.readLine();
