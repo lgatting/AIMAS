@@ -103,7 +103,9 @@ public class Node {
 	public ArrayList<Node> getExpandedNodes() {
 		ArrayList<Node> expandedNodes = new ArrayList<Node>(Command.EVERY.length);
 		
-		assignCommands(expandedNodes, 0);
+		for(int agent = 0; agent < this.agentCount; agent++) {
+			assignCommands(expandedNodes, agent);
+		}
 		//System.err.println(expandedNodes.get(0).agents[0][0] + "," + expandedNodes.get(0).agents[0][1]);
 		Collections.shuffle(expandedNodes, RND);
 		return expandedNodes;
@@ -121,59 +123,67 @@ public class Node {
 		}
 		else{*/
 			for (Command c : Command.EVERY) {
+				Node parentCopy = this.ChildNode();
+				
 				// Determine applicability of action
-				int newAgentRow = this.agents[agentNo][0] + Command.dirToRowChange(c.dir1);
-				int newAgentCol = this.agents[agentNo][1] + Command.dirToColChange(c.dir1);
+				int newAgentRow = parentCopy.agents[agentNo][0] + Command.dirToRowChange(c.dir1);
+				int newAgentCol = parentCopy.agents[agentNo][1] + Command.dirToColChange(c.dir1);
 	
+				
+				
 				Node n = this.ChildNode();
 				
 				
 				
 				if (c.actionType == Type.Move) {
 					// Check if there's a wall or box on the cell to which the agent is moving
-					if (this.cellIsFree(agentNo, newAgentRow, newAgentCol)) {
+					if (parentCopy.cellIsFree(agentNo, newAgentRow, newAgentCol)) {
 						//Node n = parent.ChildNode();
 						n.actions[agentNo] = c;
-						n.assignCommands(expandedNodes, agentNo+1);
+						//n.assignCommands(expandedNodes, agentNo+1);
 						
 						// The action is only applied if the other agents' moves are deemed applicable. THIS NEEDS TO BE FIXED as other agents may also not move
 						
 						n.agents[agentNo][0] = newAgentRow;
 						n.agents[agentNo][1] = newAgentCol;
 						
-						expandedNodes.add(this);
+						expandedNodes.add(n);
 					}
 				} else if (c.actionType == Type.Push) {
 					// Make sure that there's actually a box to move
-					if (this.boxAt(newAgentRow, newAgentCol) && sameColorAsAgent(agentNo, this.boxes[newAgentRow][newAgentCol])) {
+					if (parentCopy.boxAt(newAgentRow, newAgentCol) && sameColorAsAgent(agentNo, parentCopy.boxes[newAgentRow][newAgentCol])) {
 						int newBoxRow = newAgentRow + Command.dirToRowChange(c.dir2);
 						int newBoxCol = newAgentCol + Command.dirToColChange(c.dir2);
 						// .. and that new cell of box is free
-						if (this.cellIsFree(agentNo, newBoxRow, newBoxCol)) {
+						if (parentCopy.cellIsFree(agentNo, newBoxRow, newBoxCol)) {
 							//Node n = parent.ChildNode();
 					
 							n.actions[agentNo] = c;
-							n.assignCommands(expandedNodes, agentNo+1);
+							//n.assignCommands(expandedNodes, agentNo+1);
 							n.agents[agentNo][0] = newAgentRow;
 							n.agents[agentNo][1] = newAgentCol;
-							n.boxes[newBoxRow][newBoxCol] = this.boxes[newAgentRow][newAgentCol];
-							n.boxes[newAgentRow][newAgentCol] = 0;							
+							n.boxes[newBoxRow][newBoxCol] = parentCopy.boxes[newAgentRow][newAgentCol];
+							n.boxes[newAgentRow][newAgentCol] = 0;
+							
+							expandedNodes.add(n);
 						}
 					}
 				} else if (c.actionType == Type.Pull) {
 					// Cell is free where agent is going
-					if (this.cellIsFree(agentNo, newAgentRow, newAgentCol)) {
-						int boxRow = this.agents[agentNo][0] + Command.dirToRowChange(c.dir2);
-						int boxCol = this.agents[agentNo][1] + Command.dirToColChange(c.dir2);
+					if (parentCopy.cellIsFree(agentNo, newAgentRow, newAgentCol)) {
+						int boxRow = parentCopy.agents[agentNo][0] + Command.dirToRowChange(c.dir2);
+						int boxCol = parentCopy.agents[agentNo][1] + Command.dirToColChange(c.dir2);
 						// .. and there's a box in "dir2" of the agent
-						if (this.boxAt(boxRow, boxCol) && sameColorAsAgent(agentNo, this.boxes[newAgentRow][newAgentCol])) {
+						if (parentCopy.boxAt(boxRow, boxCol) && sameColorAsAgent(agentNo, parentCopy.boxes[newAgentRow][newAgentCol])) {
 							//Node n = parent.ChildNode();
 							n.actions[agentNo] = c;
-							n.assignCommands(expandedNodes, agentNo+1);
+							//n.assignCommands(expandedNodes, agentNo+1);
 							n.agents[agentNo][0] = newAgentRow;
 							n.agents[agentNo][1] = newAgentCol;
-							n.boxes[this.agents[agentNo][0]][this.agents[agentNo][1]] = this.boxes[boxRow][boxCol];
+							n.boxes[parentCopy.agents[agentNo][0]][parentCopy.agents[agentNo][1]] = parentCopy.boxes[boxRow][boxCol];
 							n.boxes[boxRow][boxCol] = 0;
+							
+							expandedNodes.add(n);
 						}
 					}
 				}
