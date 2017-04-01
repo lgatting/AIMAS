@@ -79,6 +79,18 @@ public class Command {
 		this.dir1 = d1;
 		this.dir2 = d2;
 	}
+	
+	@Override
+	public boolean equals(Object o) {
+		Command c = (Command) o;
+		
+		try {
+			return (this.actionType == c.actionType) && (this.dir1 == c.dir1) && (this.dir2 == c.dir2);
+		}
+		catch(NullPointerException e) {
+			return false;
+		}
+	}
 
 	@Override
 	public String toString() {

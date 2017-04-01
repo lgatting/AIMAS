@@ -8,8 +8,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,6 +27,10 @@ import searchclient.ElementWithColor.*;
 public class SearchClient {
 	public Node initialState;
 	public static int agentCount;
+	
+	public static enum StrategyType {
+		bfs, dfs, astar, wastar, greedy
+	}
 
 	public SearchClient(BufferedReader serverMessages) throws Exception {
 		List<String> lines = new ArrayList<String>();
@@ -53,6 +59,7 @@ public class SearchClient {
 					pattern = Pattern.compile("([0-9A-Z])");
 					matcher = pattern.matcher(line);
 					while (matcher.find()){
+						//System.err.println(matcher.group(1).charAt(0));
 						colorAssignments.put(matcher.group(1).charAt(0), cColor);
 					}
 				} catch (IllegalArgumentException e){
@@ -140,10 +147,77 @@ public class SearchClient {
 		
 	}
 
-	public LinkedList<Node> Search(Strategy strategy) throws IOException {
-		System.err.format("Search starting with strategy %s.\n", strategy.toString());
-		strategy.addToFrontier(this.initialState);
-
+	public LinkedList<String> Search(StrategyType strategyType, SearchClient client) throws IOException {
+		System.err.format("Search starting with strategy %s.\n", strategyType);
+		
+		int longestPlanSize = 0;
+		HashMap<Integer, LinkedList<Node>> agentPlans = new HashMap<Integer, LinkedList<Node>>();
+		
+		for(int agentNo = 0; agentNo < this.agentCount; agentNo++){
+			Strategy strategy = createStrategy(strategyType, client);
+			this.initialState.agentNo = agentNo;
+			strategy.addToFrontier(this.initialState);
+			
+			System.err.println("Agent: " + agentNo);
+			LinkedList<Node> planForAgent = searchForAgent(strategy, agentNo);
+			System.err.println(agentNo + " has plan of size " + planForAgent.size());
+			agentPlans.put(agentNo, planForAgent);
+			
+			if(planForAgent.size() >= longestPlanSize) {
+				longestPlanSize = planForAgent.size();
+			}
+		}
+		
+		
+		
+		/*Iterator it = agentPlans.entrySet().iterator();
+	    while (it.hasNext()) {
+	        Map.Entry pair = (Map.Entry)it.next();
+	        System.out.println(pair.getKey() + " = " + pair.getValue().toString());
+	        it.remove(); // avoids a ConcurrentModificationException
+	    }*/
+	    
+		LinkedList<String> jointActions = new LinkedList<String>();
+		
+	    for(int step = 0; step < longestPlanSize; step++) {
+	    	String jointAction = "[";
+	    	for(int agent = 0; agent < this.agentCount; agent++) {
+	    		System.err.println("YEAH");
+	    		if(step < agentPlans.get(agent).size()){
+	    			jointAction += agentPlans.get(agent).get(step).action.toString();
+	    		}
+	    		else {
+	    			jointAction += "NoOp";
+	    		}
+	    		if(agent < this.agentCount - 1) {	// Add commas for all cases except the last one.
+	    			jointAction += ",";
+	    		}
+	    	}
+	    	jointAction += "]";
+	    	jointActions.add(jointAction);
+	    }
+		
+		return jointActions;
+	}
+	
+	public Strategy createStrategy(StrategyType searchType, SearchClient client) {
+		switch(searchType) {	//bfs, dfs, astar, wastar, greedy
+			case bfs:
+				return new StrategyBFS();
+			case dfs:
+				return new StrategyDFS();
+			case astar:
+				return new StrategyBestFirst(new AStar(client.initialState));
+			case wastar:
+				return new StrategyBestFirst(new WeightedAStar(client.initialState, 5));
+			case greedy:
+				return new StrategyBestFirst(new Greedy(client.initialState));
+			default:
+				return new StrategyBFS();
+		}
+	}
+	
+	public LinkedList<Node> searchForAgent(Strategy strategy, int agentNo) {
 		int iterations = 0;
 		while (true) {
             if (iterations == 1000) {
@@ -157,7 +231,8 @@ public class SearchClient {
 
 			Node leafNode = strategy.getAndRemoveLeaf();
 
-			if (leafNode.isGoalState()) {
+			if (leafNode.isGoalState(agentNo)) {
+				System.err.println("FOUND!!!");
 				return leafNode.extractPlan();
 			}
 
@@ -165,28 +240,40 @@ public class SearchClient {
 			
 			//System.err.println(leafNode.actions[0].toString() + "," + leafNode.actions[1].toString());
 			
-			for (Node n : leafNode.getExpandedNodes()) { // The list of expanded nodes is shuffled randomly; see Node.java.
+			
+			
+			
+			for (Node n : leafNode.getExpandedNodes(agentNo)) { // The list of expanded nodes is shuffled randomly; see Node.java.
 				
 				//System.err.println(!strategy.isExplored(n) + "," + !strategy.inFrontier(n));
 				if (!strategy.isExplored(n) && !strategy.inFrontier(n)) {
 					//System.err.println(n.agents[0][0] + "," + n.agents[0][1]);
 					strategy.addToFrontier(n);
 					try{
-						System.err.print(n.actions[0].toString());
+						System.err.println("Added n with: " + n.action.toString());
+						System.err.println(n.isGoalState(agentNo));
 					}
-					 catch(NullPointerException e){
+					catch(NullPointerException e){
 						 System.err.print("NoOp"); 
-					 }
-					try{
-						System.err.println(n.actions[1].toString());
+					}
+					
+//					if(n.isGoalState(agentNo)){
+//						System.err.println("BREAK!");
+//						break;
+//					}
+					/*try{
+						System.err.println(n.action.toString());
 					}
 					 catch(NullPointerException e){
 						 System.err.println("NoOp"); 
-					}
+					}*/
 				}
 			}
 			iterations++;
 		}
+		
+		
+		
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -198,77 +285,76 @@ public class SearchClient {
 		// Read level and create the initial state of the problem
 		SearchClient client = new SearchClient(serverMessages);
 
+		StrategyType strategyType = null;
 		
         Strategy strategy;
         if (args.length > 0) {
             switch (args[0].toLowerCase()) {
                 case "-bfs":
-                    strategy = new StrategyBFS();
+                	strategyType = strategyType.bfs;
                     break;
                 case "-dfs":
-                    strategy = new StrategyDFS();
+                	strategyType = strategyType.dfs;
                     break;
                 case "-astar":
-                    strategy = new StrategyBestFirst(new AStar(client.initialState));
+                	strategyType = strategyType.astar;
                     break;
                 case "-wastar":
                     // You're welcome to test WA* out with different values, but for the report you must at least indicate benchmarks for W = 5.
-                    strategy = new StrategyBestFirst(new WeightedAStar(client.initialState, 5));
+                	strategyType = strategyType.wastar;
                     break;
                 case "-greedy":
-                    strategy = new StrategyBestFirst(new Greedy(client.initialState));
+                	strategyType = strategyType.greedy;
                     break;
                 default:
-                    strategy = new StrategyBFS();
+                	strategyType = strategyType.bfs;
                     System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
             }
         } else {
-            strategy = new StrategyBFS();
+        	strategyType = strategyType.bfs;
             System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
         }
 
-		LinkedList<Node> solution;
+		LinkedList<String> solution;
 		try {
-			solution = client.Search(strategy);
+			solution = client.Search(strategyType, client);
 		} catch (OutOfMemoryError ex) {
 			System.err.println("Maximum memory usage exceeded.");
 			solution = null;
 		}
 
 		if (solution == null) {
-			System.err.println(strategy.searchStatus());
+			//System.err.println(strategy.searchStatus());
 			System.err.println("Unable to solve level.");
 			System.exit(0);
 		} else {
-			System.err.println("\nSummary for " + strategy.toString());
+			//System.err.println("\nSummary for " + strategy.toString());
 			System.err.println("Found solution of length " + solution.size());
-			System.err.println(strategy.searchStatus());
+			//System.err.println(strategy.searchStatus());
 
-			for (Node n : solution) {
-				
-				System.err.println(agentCount);
-				String act = "[";
-				try{
-					act += n.actions[0].toString();
-				}
-				 catch(NullPointerException e){
-					act += "NoOp"; 
-				 }
-				for(int i = 1; i < n.agentCount; i++){
-					try{
-						act += "," + n.actions[i].toString();
-					}
-					 catch(NullPointerException e){
-						act += ",NoOp"; 
-					 }
-				}
-				act += "]";
-				
-				System.out.println(act);
+			for (String s : solution) {	// Create separate object?
+//				String act = "[";
+//				try{
+//					act += n.action.toString();
+//				}
+//				 catch(NullPointerException e){
+//					act += "NoOp"; 
+//				 }
+//				for(int i = 1; i < n.agentCount; i++){
+//					try{
+//						act += "," + n.action.toString();
+//					}
+//					 catch(NullPointerException e){
+//						act += ",NoOp"; 
+//					 }
+//				}
+//				act += "]";
+				System.err.println(s);
+				System.out.println(s);
 				String response = serverMessages.readLine();
 				if (response.contains("false")) {
-					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, act);
-					System.err.format("%s was attempted in \n%s\n", act, n.toString());
+					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
+					//System.err.format("%s was attempted in \n%s\n", s, n.toString());
 					break;
 				}
 			}

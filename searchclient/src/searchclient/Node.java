@@ -38,7 +38,8 @@ public class Node {
 	private HashMap<Character, Color> colorAssignments;
 
 	public Node parent;
-	public Command[] actions;
+	public int agentNo;
+	public Command action;
 	
 	public int agentCount;
 
@@ -60,7 +61,6 @@ public class Node {
 		this.boxes = new char[rows][cols];
 		this.goals = new char[rows][cols];
 		this.agents = new int[agentCount][2];
-		this.actions = new Command[agentCount];
 		this.agentCount = agentCount;
 		
 		this.rows = rows;
@@ -81,33 +81,37 @@ public class Node {
 		return this.parent == null;
 	}
 
-	public boolean isGoalState() {
+	public boolean isGoalState(int agentNo) {
+		int goalCount = 0;
+		int satisfiedGoals = 0;
 		for (int row = 1; row < this.rows - 1; row++) {
 			for (int col = 1; col < this.cols - 1; col++) {
 				char g = goals[row][col];
-				char b = Character.toLowerCase(boxes[row][col]);
-				if (g > 0 && b != g) {
-					return false;
+				char b = boxes[row][col];
+				if(g > 0 && sameColorAsAgent(agentNo, Character.toUpperCase(g))) {
+					goalCount++;
+				}
+				if (g > 0 && Character.toLowerCase(b) == g && sameColorAsAgent(agentNo, b)) {
+					satisfiedGoals++;
 				}
 			}
 		}
-		return true;
+		return goalCount == satisfiedGoals;
 	}
 	
 	public boolean sameColorAsAgent(int agent, char box) {
-		Color agentColor = colorAssignments.get((char) (agent) + '0');
+		Color agentColor = colorAssignments.get((char) (agent  + '0'));
 		Color boxColor = colorAssignments.get(box);
 		return agentColor == boxColor;
 	}
 
-	public ArrayList<Node> getExpandedNodes() {
+	public ArrayList<Node> getExpandedNodes(int agentNo) {
 		ArrayList<Node> expandedNodes = new ArrayList<Node>(Command.EVERY.length);
 		
-		for(int agent = 0; agent < this.agentCount; agent++) {
-			assignCommands(expandedNodes, agent);
-		}
+		assignCommands(expandedNodes, agentNo);
+		
 		//System.err.println(expandedNodes.get(0).agents[0][0] + "," + expandedNodes.get(0).agents[0][1]);
-		Collections.shuffle(expandedNodes, RND);
+		//Collections.shuffle(expandedNodes, RND);
 		return expandedNodes;
 	}
 	
@@ -123,13 +127,11 @@ public class Node {
 		}
 		else{*/
 			for (Command c : Command.EVERY) {
-				Node parentCopy = this.ChildNode();
+				System.err.println("Prev: " + this.action);
 				
 				// Determine applicability of action
-				int newAgentRow = parentCopy.agents[agentNo][0] + Command.dirToRowChange(c.dir1);
-				int newAgentCol = parentCopy.agents[agentNo][1] + Command.dirToColChange(c.dir1);
-	
-				
+				int newAgentRow = this.agents[agentNo][0] + Command.dirToRowChange(c.dir1);
+				int newAgentCol = this.agents[agentNo][1] + Command.dirToColChange(c.dir1);
 				
 				Node n = this.ChildNode();
 				
@@ -137,9 +139,9 @@ public class Node {
 				
 				if (c.actionType == Type.Move) {
 					// Check if there's a wall or box on the cell to which the agent is moving
-					if (parentCopy.cellIsFree(agentNo, newAgentRow, newAgentCol)) {
+					if (this.cellIsFree(agentNo, newAgentRow, newAgentCol)) {
 						//Node n = parent.ChildNode();
-						n.actions[agentNo] = c;
+						n.action = c;
 						//n.assignCommands(expandedNodes, agentNo+1);
 						
 						// The action is only applied if the other agents' moves are deemed applicable. THIS NEEDS TO BE FIXED as other agents may also not move
@@ -150,19 +152,22 @@ public class Node {
 						expandedNodes.add(n);
 					}
 				} else if (c.actionType == Type.Push) {
+					
 					// Make sure that there's actually a box to move
-					if (parentCopy.boxAt(newAgentRow, newAgentCol) && sameColorAsAgent(agentNo, parentCopy.boxes[newAgentRow][newAgentCol])) {
+					if (this.boxAt(newAgentRow, newAgentCol) && sameColorAsAgent(agentNo, this.boxes[newAgentRow][newAgentCol])) {
+						//System.err.println("Trying PUSH");
+						System.err.println("Box: " + this.boxes[newAgentRow][newAgentCol] + " " + colorAssignments.get((char) (agentNo + '0')) + " " + colorAssignments.get(this.boxes[newAgentRow][newAgentCol]));
 						int newBoxRow = newAgentRow + Command.dirToRowChange(c.dir2);
 						int newBoxCol = newAgentCol + Command.dirToColChange(c.dir2);
 						// .. and that new cell of box is free
-						if (parentCopy.cellIsFree(agentNo, newBoxRow, newBoxCol)) {
+						if (this.cellIsFree(agentNo, newBoxRow, newBoxCol)) {
 							//Node n = parent.ChildNode();
 					
-							n.actions[agentNo] = c;
+							n.action = c;
 							//n.assignCommands(expandedNodes, agentNo+1);
 							n.agents[agentNo][0] = newAgentRow;
 							n.agents[agentNo][1] = newAgentCol;
-							n.boxes[newBoxRow][newBoxCol] = parentCopy.boxes[newAgentRow][newAgentCol];
+							n.boxes[newBoxRow][newBoxCol] = this.boxes[newAgentRow][newAgentCol];
 							n.boxes[newAgentRow][newAgentCol] = 0;
 							
 							expandedNodes.add(n);
@@ -170,17 +175,17 @@ public class Node {
 					}
 				} else if (c.actionType == Type.Pull) {
 					// Cell is free where agent is going
-					if (parentCopy.cellIsFree(agentNo, newAgentRow, newAgentCol)) {
-						int boxRow = parentCopy.agents[agentNo][0] + Command.dirToRowChange(c.dir2);
-						int boxCol = parentCopy.agents[agentNo][1] + Command.dirToColChange(c.dir2);
+					if (this.cellIsFree(agentNo, newAgentRow, newAgentCol)) {
+						int boxRow = this.agents[agentNo][0] + Command.dirToRowChange(c.dir2);
+						int boxCol = this.agents[agentNo][1] + Command.dirToColChange(c.dir2);
 						// .. and there's a box in "dir2" of the agent
-						if (parentCopy.boxAt(boxRow, boxCol) && sameColorAsAgent(agentNo, parentCopy.boxes[newAgentRow][newAgentCol])) {
+						if (this.boxAt(boxRow, boxCol) && sameColorAsAgent(agentNo, this.boxes[newAgentRow][newAgentCol])) {
 							//Node n = parent.ChildNode();
-							n.actions[agentNo] = c;
+							n.action = c;
 							//n.assignCommands(expandedNodes, agentNo+1);
 							n.agents[agentNo][0] = newAgentRow;
 							n.agents[agentNo][1] = newAgentCol;
-							n.boxes[parentCopy.agents[agentNo][0]][parentCopy.agents[agentNo][1]] = parentCopy.boxes[boxRow][boxCol];
+							n.boxes[this.agents[agentNo][0]][this.agents[agentNo][1]] = this.boxes[boxRow][boxCol];
 							n.boxes[boxRow][boxCol] = 0;
 							
 							expandedNodes.add(n);
@@ -216,7 +221,7 @@ public class Node {
 		copy.colorAssignments = this.colorAssignments;
 		copy.walls = this.walls;
 		copy.goals = this.goals;
-		System.arraycopy(this.actions, 0, copy.actions, 0, agentCount);
+		copy.action = this.action;
 		for (int row = 0; row < this.rows; row++) {
 			System.arraycopy(this.boxes[row], 0, copy.boxes[row], 0, this.cols);
 		}
@@ -260,7 +265,7 @@ public class Node {
 		if (this.getClass() != obj.getClass())
 			return false;
 		Node other = (Node) obj;
-		if (!Arrays.deepEquals(this.actions, other.actions))
+		if (this.action.equals(other.action))
 			return false;
 		if (!Arrays.deepEquals(this.agents, other.agents))
 			return false;
