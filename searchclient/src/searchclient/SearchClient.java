@@ -168,7 +168,7 @@ public class SearchClient {
 			for (Node n : leafNode.getExpandedNodes()) { // The list of expanded nodes is shuffled randomly; see Node.java.
 				
 				System.err.println(!strategy.isExplored(n) + "," + !strategy.inFrontier(n));
-				if (!strategy.isExplored(n) && !strategy.inFrontier(n)) {	// THE CURRENT PROBLEM IS HERE!!!!!
+				if (!strategy.isExplored(n) && !strategy.inFrontier(n)) {
 					//System.err.println(n.agents[0][0] + "," + n.agents[0][1]);
 					strategy.addToFrontier(n);
 					try{
