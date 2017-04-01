@@ -114,18 +114,20 @@ public class Node {
 		// PROBLEM in else: Changes are immediately applied for each agent. The actions must only be applied
 		// after they have all been observed and each of their moves have been deemed applicable
 		
-		if(agentNo == this.agentCount){
+		/*if(agentNo == this.agentCount){
 			//System.err.println(this.actions[0].toString() + "," + this.actions[1].toString());
 			
 			expandedNodes.add(this.ChildNode());	// THE CURRENT PROBLEM IS HERE!!!!! Boxes arrays are not updated before the node is pushed onto the arraylist!
 		}
-		else{
+		else{*/
 			for (Command c : Command.EVERY) {
 				// Determine applicability of action
 				int newAgentRow = this.agents[agentNo][0] + Command.dirToRowChange(c.dir1);
 				int newAgentCol = this.agents[agentNo][1] + Command.dirToColChange(c.dir1);
 	
 				Node n = this.ChildNode();
+				
+				
 				
 				if (c.actionType == Type.Move) {
 					// Check if there's a wall or box on the cell to which the agent is moving
@@ -138,6 +140,8 @@ public class Node {
 						
 						n.agents[agentNo][0] = newAgentRow;
 						n.agents[agentNo][1] = newAgentCol;
+						
+						expandedNodes.add(this);
 					}
 				} else if (c.actionType == Type.Push) {
 					// Make sure that there's actually a box to move
@@ -175,7 +179,7 @@ public class Node {
 				}
 				//n.assignCommands(n, expandedNodes, agentNo+1);
 			}
-		}
+		//}
 	}
 
 	private boolean cellIsFree(int agentNo, int row, int col) {
