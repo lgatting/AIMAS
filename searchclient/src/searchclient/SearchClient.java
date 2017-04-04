@@ -142,9 +142,6 @@ public class SearchClient {
 			}
 			row++;
 		}
-		
-		
-		
 	}
 
 	public LinkedList<String> Search(StrategyType strategyType, SearchClient client) throws IOException {
@@ -357,6 +354,17 @@ public class SearchClient {
 					//System.err.format("%s was attempted in \n%s\n", s, n.toString());
 					break;
 				}
+			}
+			RoomDetector rd = new RoomDetector();
+			int[][] roomRegions = rd.detectRooms(client.initialState.walls, client.initialState.rows, client.initialState.cols,
+						   						 client.initialState.agents[0][0], client.initialState.agents[0][1]);
+			
+			
+			for(int i = 0; i < client.initialState.rows; i++){
+				for(int j = 0; j < client.initialState.cols; j++){
+					System.err.print(roomRegions[i][j]);
+				}
+				System.err.println("");
 			}
 		}
 	}
