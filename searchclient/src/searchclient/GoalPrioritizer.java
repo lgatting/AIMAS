@@ -5,11 +5,24 @@ import java.util.PriorityQueue;
 
 public class GoalPrioritizer {
 	boolean[][] walls;
+	char[][] goals;
 	int[][] levelToSearch;
+	char[][] copyOfLevelToSearch;
+	
+	int rows;
+	int cols;
+	
+	DistanceBFS dbfs;
+	
+	PriorityQueue<int[]> goalQueue;
+	
 	ArrayDeque<int[]> queue = new ArrayDeque<int[]>();
 	
 	public GoalPrioritizer(boolean[][] walls, char[][] goals, char[][] boxes, int rows, int cols){
+		this.goalQueue = new PriorityQueue<int[]>(new GoalPriorityComparator());
+		
 		this.walls = walls;
+		this.goals = goals;
 		
 		for(int row = 0; row < rows; row++) {
 			for(int col = 0; col < cols; col++) {
@@ -21,14 +34,26 @@ public class GoalPrioritizer {
 				}
 			}
 		}
+		
+		this.dbfs = new DistanceBFS(walls, boxes, rows, cols);
 	}
 	
 	public int[][] prioritizeGoals(int startRow, int startCol){
 		
 		// To reuse this object for searches, make a copy of the levelToSearchArray here!
+		for(int row = 0; row < rows; row++){
+			for(int col = 0; col < cols; col++){
+				if(goals[row][col] > 0){
+					int priority = dbfs.closestBoxFromGoal(row, col, goals[row][col]);
+					if(priority > 0){
+						int[] goalCell = {row, col, priority};
+						goalQueue.offer(goalCell);
+					}
+				}
+			}
+		}
 		
-		
-		// PRIORITIZE GOALS ACCORDING TO NUMBER OF GOALS ENCOUNTERED
+		// Check for each prioritised goal whether they can be solved without depending on other goals.
 		
 		levelToSearch = new int[rows][cols];
 		

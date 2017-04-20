@@ -2,6 +2,7 @@ package searchclient;
 
 import java.util.ArrayDeque;
 
+// Used to calculate the closest distance to a box from a goal.
 public class DistanceBFS {
 	boolean[][] walls;
 	char[][] levelToSearch;
