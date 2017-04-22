@@ -27,6 +27,7 @@ import searchclient.ElementWithColor.*;
 public class SearchClient {
 	public Node initialState;
 	public static int agentCount;
+	public HashMap<Character, Color> colorAssignments;
 	
 	public static enum StrategyType {
 		bfs, dfs, astar, wastar, greedy
@@ -36,7 +37,7 @@ public class SearchClient {
 		List<String> lines = new ArrayList<String>();
 	
 		
-		HashMap<Character, Color> colorAssignments = new HashMap<Character, Color>();
+		colorAssignments = new HashMap<Character, Color>();
 		
 		// Read lines specifying colors
 		String fileline = serverMessages.readLine();
@@ -96,6 +97,11 @@ public class SearchClient {
 				char chr = line.charAt(col);
 				if ('0' <= chr && chr <= '9') { // Agent.
 					
+					if(!colorAssignments.containsKey(chr)) {
+						// Adds the character with color blue to the color map if it has not been assigned any color
+						colorAssignments.put(chr, Color.blue);
+					}
+					
 					int agentNo = Character.getNumericValue(chr);
 					
 					if (agentFound[agentNo]) {
@@ -111,7 +117,6 @@ public class SearchClient {
 		}
 		
 		this.initialState = new Node(null, rows, cols, agentCount);
-		this.initialState.setcolormap(colorAssignments);
 		
 		row = 0;
 
@@ -129,6 +134,10 @@ public class SearchClient {
 					this.initialState.agents[agentNo][1] = col;
 					
 				} else if ('A' <= chr && chr <= 'Z') { // Box.
+					if(!colorAssignments.containsKey(chr)) {
+						// Adds the character with color blue to the color map if it has not been assigned any color
+						colorAssignments.put(chr, Color.blue);
+					}
 					this.initialState.boxes[row][col] = chr;
 					
 				} else if ('a' <= chr && chr <= 'z') { // Goal.
@@ -142,6 +151,7 @@ public class SearchClient {
 			}
 			row++;
 		}
+		this.initialState.setcolormap(colorAssignments);
 	}
 
 	public LinkedList<String> Search(StrategyType strategyType, SearchClient client) throws IOException {
@@ -311,61 +321,67 @@ public class SearchClient {
         	strategyType = strategyType.bfs;
             System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
         }
-
-		LinkedList<String> solution;
-		try {
-			solution = client.Search(strategyType, client);
-		} catch (OutOfMemoryError ex) {
-			System.err.println("Maximum memory usage exceeded.");
-			solution = null;
-		}
-
-		if (solution == null) {
-			//System.err.println(strategy.searchStatus());
-			System.err.println("Unable to solve level.");
-			System.exit(0);
-		} else {
-			//System.err.println("\nSummary for " + strategy.toString());
-			System.err.println("Found solution of length " + solution.size());
-			//System.err.println(strategy.searchStatus());
-
-			for (String s : solution) {	// Create separate object?
-//				String act = "[";
-//				try{
-//					act += n.action.toString();
+        
+        DistanceBFS dbfs = new DistanceBFS(client.initialState.walls, client.initialState.boxes, client.colorAssignments, client.initialState.rows, client.initialState.cols);
+        
+        int[] agentPos = client.initialState.agents[1];
+        
+        System.err.println(dbfs.closestMovableBoxFromAgent(agentPos[0], agentPos[1], 1));
+        
+//		LinkedList<String> solution;
+//		try {
+//			solution = client.Search(strategyType, client);
+//		} catch (OutOfMemoryError ex) {
+//			System.err.println("Maximum memory usage exceeded.");
+//			solution = null;
+//		}
+//
+//		if (solution == null) {
+//			//System.err.println(strategy.searchStatus());
+//			System.err.println("Unable to solve level.");
+//			System.exit(0);
+//		} else {
+//			//System.err.println("\nSummary for " + strategy.toString());
+//			System.err.println("Found solution of length " + solution.size());
+//			//System.err.println(strategy.searchStatus());
+//
+//			for (String s : solution) {	// Create separate object?
+////				String act = "[";
+////				try{
+////					act += n.action.toString();
+////				}
+////				 catch(NullPointerException e){
+////					act += "NoOp"; 
+////				 }
+////				for(int i = 1; i < n.agentCount; i++){
+////					try{
+////						act += "," + n.action.toString();
+////					}
+////					 catch(NullPointerException e){
+////						act += ",NoOp"; 
+////					 }
+////				}
+////				act += "]";
+//				System.err.println(s);
+//				System.out.println(s);
+//				String response = serverMessages.readLine();
+//				if (response.contains("false")) {
+//					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
+//					//System.err.format("%s was attempted in \n%s\n", s, n.toString());
+//					break;
 //				}
-//				 catch(NullPointerException e){
-//					act += "NoOp"; 
-//				 }
-//				for(int i = 1; i < n.agentCount; i++){
-//					try{
-//						act += "," + n.action.toString();
-//					}
-//					 catch(NullPointerException e){
-//						act += ",NoOp"; 
-//					 }
+//			}
+//			RoomDetector rd = new RoomDetector();
+//			int[][] roomRegions = rd.detectRooms(client.initialState.walls, client.initialState.rows, client.initialState.cols,
+//						   						 client.initialState.agents[0][0], client.initialState.agents[0][1]);
+//			
+//			
+//			for(int i = 0; i < client.initialState.rows; i++){
+//				for(int j = 0; j < client.initialState.cols; j++){
+//					System.err.print(roomRegions[i][j]);
 //				}
-//				act += "]";
-				System.err.println(s);
-				System.out.println(s);
-				String response = serverMessages.readLine();
-				if (response.contains("false")) {
-					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
-					//System.err.format("%s was attempted in \n%s\n", s, n.toString());
-					break;
-				}
-			}
-			RoomDetector rd = new RoomDetector();
-			int[][] roomRegions = rd.detectRooms(client.initialState.walls, client.initialState.rows, client.initialState.cols,
-						   						 client.initialState.agents[0][0], client.initialState.agents[0][1]);
-			
-			
-			for(int i = 0; i < client.initialState.rows; i++){
-				for(int j = 0; j < client.initialState.cols; j++){
-					System.err.print(roomRegions[i][j]);
-				}
-				System.err.println("");
-			}
-		}
+//				System.err.println("");
+//			}
+//		}
 	}
 }

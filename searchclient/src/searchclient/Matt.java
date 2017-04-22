@@ -23,7 +23,7 @@ public class Matt {
 	
 	HashMap<Integer, int[]> goalIndexes = new HashMap<Integer, int[]>();
 	
-	public Matt(boolean[][] walls, char[][] goals, char[][] boxes, int rows, int cols){
+	public Matt(boolean[][] walls, char[][] goals, char[][] boxes, HashMap<Character, Color> colorAssignments, int rows, int cols){
 		this.goalQueue = new PriorityQueue<int[]>(new GoalPriorityComparator());
 		
 		this.walls = walls;
@@ -42,7 +42,7 @@ public class Matt {
 			}
 		}
 		
-		this.dbfs = new DistanceBFS(walls, boxes, rows, cols);
+		this.dbfs = new DistanceBFS(walls, boxes, colorAssignments, rows, cols);
 	}
 	
 	public boolean[][] fillDependenceMatrix(int startRow, int startCol){
