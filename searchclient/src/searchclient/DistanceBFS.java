@@ -99,4 +99,8 @@ public class DistanceBFS {
 		
 		return -1;
 	}
+	
+	public void setWall(int row, int col, boolean setTo){
+		this.walls[row][col] = setTo;
+	}
 }
