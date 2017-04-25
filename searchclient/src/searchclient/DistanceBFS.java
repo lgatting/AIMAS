@@ -85,6 +85,36 @@ public class DistanceBFS {
 		return -1;
 	}
 	
+	// otherAgentsPlan is a boolean array with the fields that other agents are planning to traverse set to true
+	public int closestSafeCellForBox(boolean[][] otherAgentsPlan, int boxStartRow, int boxStartCol){
+		// If the box is in a non-critical cell
+		if(!otherAgentsPlan[boxStartRow][boxStartCol]){
+			return 0;
+		}
+		
+		resetCopyOfLevel();
+		
+		char boxChar = levelToSearch[boxStartRow][boxStartCol];
+		
+		Color boxColor = this.colorAssignments.get(boxChar);
+		
+		System.err.println("" + boxStartRow + "," + boxStartCol);
+		
+		copyOfLevelToSearch[boxStartRow][boxStartCol] = '!';	// Mark current cell as searched
+		
+		queue.add(createPosDistArray(boxStartRow, boxStartCol, 0));
+		
+		while(!queue.isEmpty()) {
+			int result = explore3(otherAgentsPlan, boxColor);
+			if(result >= 0){
+				queue.clear();
+				return result;
+			}
+		}
+		
+		return -1;
+	}
+	
 	private int[] createPosDistArray(int row, int col, int dist){
 		int[] posDistArray = new int[3];
 		
@@ -107,19 +137,21 @@ public class DistanceBFS {
 			return dist;
 		}
 		
-		copyOfLevelToSearch[row][col] = '!';
-		
 		if(!walls[row-1][col] && copyOfLevelToSearch[row-1][col] != '!') {	// If the neighbouring cell is not a wall
 			queue.add(createPosDistArray(row-1,col, dist+1));
+			copyOfLevelToSearch[row][col] = '!';
 		}
 		if(!walls[row+1][col] && copyOfLevelToSearch[row+1][col] != '!') {
 			queue.add(createPosDistArray(row+1,col, dist+1));
+			copyOfLevelToSearch[row][col] = '!';
 		}
 		if(!walls[row][col-1] && copyOfLevelToSearch[row][col-1] != '!') {
 			queue.add(createPosDistArray(row,col-1, dist+1));
+			copyOfLevelToSearch[row][col] = '!';
 		}
 		if(!walls[row][col+1] && copyOfLevelToSearch[row][col+1] != '!') {
 			queue.add(createPosDistArray(row,col+1, dist+1));
+			copyOfLevelToSearch[row][col] = '!';
 		}
 		
 		return -1;
@@ -140,8 +172,6 @@ public class DistanceBFS {
 			return dist;
 		}
 		
-		copyOfLevelToSearch[row][col] = '!';
-		
 		if(!walls[row-1][col] && copyOfLevelToSearch[row-1][col] != '!') {	// If the neighbouring cell is not a wall
 			if(copyOfLevelToSearch[row-1][col] >= 'A' && copyOfLevelToSearch[row-1][col] <= 'Z' &&
 				this.colorAssignments.get(copyOfLevelToSearch[row-1][col]) != agentColor){
@@ -150,33 +180,70 @@ public class DistanceBFS {
 			else {
 				queue.add(createPosDistArray(row-1,col, dist+1));
 			}
+			copyOfLevelToSearch[row][col] = '!';
 		}
 		if(!walls[row+1][col] && copyOfLevelToSearch[row+1][col] != '!') {
 			if(copyOfLevelToSearch[row+1][col] >= 'A' && copyOfLevelToSearch[row+1][col] <= 'Z' &&
-					this.colorAssignments.get(copyOfLevelToSearch[row+1][col]) != agentColor){
-					
-				}
-				else {
-					queue.add(createPosDistArray(row+1,col, dist+1));
-				}
+				this.colorAssignments.get(copyOfLevelToSearch[row+1][col]) != agentColor){
+				
+			}
+			else {
+				queue.add(createPosDistArray(row+1,col, dist+1));
+			}
+			copyOfLevelToSearch[row][col] = '!';
 		}
 		if(!walls[row][col-1] && copyOfLevelToSearch[row][col-1] != '!') {
 			if(copyOfLevelToSearch[row][col-1] >= 'A' && copyOfLevelToSearch[row][col-1] <= 'Z' &&
-					this.colorAssignments.get(copyOfLevelToSearch[row][col-1]) != agentColor){
-					
-				}
-				else {
-					queue.add(createPosDistArray(row,col-1, dist+1));
-				}
+				this.colorAssignments.get(copyOfLevelToSearch[row][col-1]) != agentColor){
+				
+			}
+			else {
+				queue.add(createPosDistArray(row,col-1, dist+1));
+			}
+			copyOfLevelToSearch[row][col] = '!';
 		}
 		if(!walls[row][col+1] && copyOfLevelToSearch[row][col+1] != '!') {
 			if(copyOfLevelToSearch[row][col+1] >= 'A' && copyOfLevelToSearch[row][col+1] <= 'Z' &&
-					this.colorAssignments.get(copyOfLevelToSearch[row][col+1]) != agentColor){
-					
-				}
-				else {
-					queue.add(createPosDistArray(row,col+1, dist+1));
-				}
+				this.colorAssignments.get(copyOfLevelToSearch[row][col+1]) != agentColor){
+				
+			}
+			else {
+				queue.add(createPosDistArray(row,col+1, dist+1));
+			}
+			copyOfLevelToSearch[row][col] = '!';
+		}
+		
+		return -1;
+	}
+	
+	public int explore3(boolean[][] otherAgentsPlan, Color boxColor){
+		int[] curPosDist = queue.remove();
+		
+		int row = curPosDist[0];
+		int col = curPosDist[1];
+		int dist = curPosDist[2];
+		
+		// If a free cell (non-critical) is encountered, the distance from the box to the cell is returned
+		if(!otherAgentsPlan[row][col]){
+			return dist;
+		}
+		
+		// Missing the logic to consider agents and their colors
+		if(!walls[row-1][col] && copyOfLevelToSearch[row-1][col] != '!' && otherAgentsPlan[row-1][col]) {	// If the neighbouring cell is not a wall
+			queue.add(createPosDistArray(row-1,col, dist+1));
+			copyOfLevelToSearch[row-1][col] = '!';
+		}
+		if(!walls[row+1][col] && copyOfLevelToSearch[row+1][col] != '!' && otherAgentsPlan[row+1][col]) {
+			queue.add(createPosDistArray(row+1,col, dist+1));
+			copyOfLevelToSearch[row+1][col] = '!';
+		}
+		if(!walls[row][col-1] && copyOfLevelToSearch[row][col-1] != '!' && otherAgentsPlan[row][col-1]) {
+			queue.add(createPosDistArray(row,col-1, dist+1));
+			copyOfLevelToSearch[row][col-1] = '!';
+		}
+		if(!walls[row][col+1] && copyOfLevelToSearch[row][col+1] != '!' && otherAgentsPlan[row][col+1]) {
+			queue.add(createPosDistArray(row,col+1, dist+1));
+			copyOfLevelToSearch[row][col+1] = '!';
 		}
 		
 		return -1;
