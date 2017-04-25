@@ -1,0 +1,17 @@
+green: 1,A,G,H,O
+red: 0,B,E,I,N
+yellow: 2,C,F,J,L
+blue: 3,D,K,M
+++++++++++++++++
++0 A        B 2+
+++++  N L   ++++
++1   JE        +
++ F     G    + +
++H   D    K I+C+
++      O     +3+
++         M  +++
++              +
++m+l+h+i+      +
++k+j+o+n+      +
++d+f+g+e+      +
+++++++++++++++++
