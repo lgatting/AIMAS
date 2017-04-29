@@ -35,7 +35,8 @@ public class Node {
 	public char[][] boxes;
 	public char[][] goals;
 	public int[][] agents ;
-	private HashMap<Character, Color> colorAssignments;
+	
+	public HashMap<Character, Color> colorAssignments;
 
 	public Node parent;
 	public int agentNo;
@@ -99,6 +100,7 @@ public class Node {
 		return goalCount == satisfiedGoals;
 	}
 	
+
 	public boolean sameColorAsAgent(int agent, char box) {
 		Color agentColor = colorAssignments.get((char) (agent  + '0'));
 		Color boxColor = colorAssignments.get(box);
@@ -110,7 +112,7 @@ public class Node {
 		
 		assignCommands(expandedNodes, agentNo);
 		
-		//System.err.println(expandedNodes.get(0).agents[0][0] + "," + expandedNodes.get(0).agents[0][1]);
+		////System.err.println(expandedNodes.get(0).agents[0][0] + "," + expandedNodes.get(0).agents[0][1]);
 		//Collections.shuffle(expandedNodes, RND);
 		return expandedNodes;
 	}
@@ -121,13 +123,17 @@ public class Node {
 		// after they have all been observed and each of their moves have been deemed applicable
 		
 		/*if(agentNo == this.agentCount){
+<<<<<<< HEAD
 			//System.err.println(this.actions[0].toString() + "," + this.actions[1].toString());
+=======
+			////System.err.println(this.actions[0].toString() + "," + this.actions[1].toString());
+>>>>>>> 7bad6d165b4efa01ecca3b59a3b5f8a3d642c879
 			
 			expandedNodes.add(this.ChildNode());	// THE CURRENT PROBLEM IS HERE!!!!! Boxes arrays are not updated before the node is pushed onto the arraylist!
 		}
 		else{*/
 			for (Command c : Command.EVERY) {
-				System.err.println("Prev: " + this.action);
+				//System.err.println("Prev: " + this.action);
 				
 				// Determine applicability of action
 				int newAgentRow = this.agents[agentNo][0] + Command.dirToRowChange(c.dir1);
@@ -155,8 +161,9 @@ public class Node {
 					
 					// Make sure that there's actually a box to move
 					if (this.boxAt(newAgentRow, newAgentCol) && sameColorAsAgent(agentNo, this.boxes[newAgentRow][newAgentCol])) {
-						//System.err.println("Trying PUSH");
-						System.err.println("Box: " + this.boxes[newAgentRow][newAgentCol] + " " + colorAssignments.get((char) (agentNo + '0')) + " " + colorAssignments.get(this.boxes[newAgentRow][newAgentCol]));
+
+						////System.err.println("Trying PUSH");
+						//System.err.println("Box: " + this.boxes[newAgentRow][newAgentCol] + " " + colorAssignments.get((char) (agentNo + '0')) + " " + colorAssignments.get(this.boxes[newAgentRow][newAgentCol]));
 						int newBoxRow = newAgentRow + Command.dirToRowChange(c.dir2);
 						int newBoxCol = newAgentCol + Command.dirToColChange(c.dir2);
 						// .. and that new cell of box is free

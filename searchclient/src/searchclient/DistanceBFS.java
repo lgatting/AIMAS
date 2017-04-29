@@ -10,6 +10,7 @@ public class DistanceBFS {
 	boolean[][] walls;
 	char[][] levelToSearch;
 	char[][] copyOfLevelToSearch;
+	HashMap<Character, Color> colorAssignments;
 	
 	int rows;
 	int cols;
@@ -17,8 +18,6 @@ public class DistanceBFS {
 	char boxChar;
 	
 	ArrayDeque<int[]> queue = new ArrayDeque<int[]>();
-	
-	HashMap<Character, Color> colorAssignments;
 	
 	public DistanceBFS(boolean[][] walls, char[][] boxes, HashMap<Character, Color> colorAssignments, int rows, int cols){
 		this.walls = walls;
@@ -248,6 +247,10 @@ public class DistanceBFS {
 		
 		return -1;
 	}
+	
+//	public boolean differentInCell(int row, int col) {
+//		colorAssignments.get(key)
+//	}
 	
 	public void setWall(int row, int col, boolean setTo){
 		this.walls[row][col] = setTo;
