@@ -322,66 +322,60 @@ public class SearchClient {
             System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
         }
         
-        DistanceBFS dbfs = new DistanceBFS(client.initialState.walls, client.initialState.boxes, client.colorAssignments, client.initialState.rows, client.initialState.cols);
-        
-        int[] agentPos = client.initialState.agents[1];
-        
-        System.err.println(dbfs.closestMovableBoxFromAgent(agentPos[0], agentPos[1], 1));
-        
-//		LinkedList<String> solution;
-//		try {
-//			solution = client.Search(strategyType, client);
-//		} catch (OutOfMemoryError ex) {
-//			System.err.println("Maximum memory usage exceeded.");
-//			solution = null;
-//		}
-//
-//		if (solution == null) {
-//			//System.err.println(strategy.searchStatus());
-//			System.err.println("Unable to solve level.");
-//			System.exit(0);
-//		} else {
-//			//System.err.println("\nSummary for " + strategy.toString());
-//			System.err.println("Found solution of length " + solution.size());
-//			//System.err.println(strategy.searchStatus());
-//
-//			for (String s : solution) {	// Create separate object?
-////				String act = "[";
-////				try{
-////					act += n.action.toString();
-////				}
-////				 catch(NullPointerException e){
-////					act += "NoOp"; 
-////				 }
-////				for(int i = 1; i < n.agentCount; i++){
-////					try{
-////						act += "," + n.action.toString();
-////					}
-////					 catch(NullPointerException e){
-////						act += ",NoOp"; 
-////					 }
-////				}
-////				act += "]";
-//				System.err.println(s);
-//				System.out.println(s);
-//				String response = serverMessages.readLine();
-//				if (response.contains("false")) {
-//					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
-//					//System.err.format("%s was attempted in \n%s\n", s, n.toString());
-//					break;
+		LinkedList<String> solution;
+		try {
+			solution = client.Search(strategyType, client);
+		} catch (OutOfMemoryError ex) {
+			System.err.println("Maximum memory usage exceeded.");
+			solution = null;
+		}
+
+		if (solution == null) {
+			//System.err.println(strategy.searchStatus());
+			System.err.println("Unable to solve level.");
+			System.exit(0);
+		} else {
+			//System.err.println("\nSummary for " + strategy.toString());
+			System.err.println("Found solution of length " + solution.size());
+			//System.err.println(strategy.searchStatus());
+
+			for (String s : solution) {	// Create separate object?
+//				String act = "[";
+//				try{
+//					act += n.action.toString();
 //				}
-//			}
-//			RoomDetector rd = new RoomDetector();
-//			int[][] roomRegions = rd.detectRooms(client.initialState.walls, client.initialState.rows, client.initialState.cols,
-//						   						 client.initialState.agents[0][0], client.initialState.agents[0][1]);
-//			
-//			
-//			for(int i = 0; i < client.initialState.rows; i++){
-//				for(int j = 0; j < client.initialState.cols; j++){
-//					System.err.print(roomRegions[i][j]);
+//				 catch(NullPointerException e){
+//					act += "NoOp"; 
+//				 }
+//				for(int i = 1; i < n.agentCount; i++){
+//					try{
+//						act += "," + n.action.toString();
+//					}
+//					 catch(NullPointerException e){
+//						act += ",NoOp"; 
+//					 }
 //				}
-//				System.err.println("");
-//			}
-//		}
+//				act += "]";
+				System.err.println(s);
+				System.out.println(s);
+				String response = serverMessages.readLine();
+				if (response.contains("false")) {
+					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
+					//System.err.format("%s was attempted in \n%s\n", s, n.toString());
+					break;
+				}
+			}
+			RoomDetector rd = new RoomDetector();
+			int[][] roomRegions = rd.detectRooms(client.initialState.walls, client.initialState.rows, client.initialState.cols,
+						   						 client.initialState.agents[0][0], client.initialState.agents[0][1]);
+			
+			
+			for(int i = 0; i < client.initialState.rows; i++){
+				for(int j = 0; j < client.initialState.cols; j++){
+					System.err.print(roomRegions[i][j]);
+				}
+				System.err.println("");
+			}
+		}
 	}
 }
