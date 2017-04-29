@@ -179,14 +179,6 @@ public class SearchClient {
 			}
 		}
 		
-		
-		for(int i=0;i<this.agentCount;i++){
-			System.err.println("Plan for agent "+i);
-			for(int j=0; j<longestPlanSize;j++){
-				System.err.println(agentPlans.get(i).get(j).action.toString());
-		}
-			System.err.println(" ");
-			}
 	
 	
 		
@@ -210,6 +202,13 @@ public class SearchClient {
 		    		hmap.get(agent).add(newagentpos);
 		    	}
 		    }
+		    
+		    for(int agent = 0; agent < this.agentCount; agent++) {	    
+				for(int j=0 ; j< hmap.get(0).size() ; j++){
+					System.err.print(hmap.get(agent).get(j)+", ");
+				}
+				System.err.println(" ");
+			}
 			
 		    // select pair of routes  
 		    

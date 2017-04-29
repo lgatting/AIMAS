@@ -35,7 +35,7 @@ public class Node {
 	public char[][] boxes;
 	public char[][] goals;
 	public int[][] agents ;
-	private HashMap<Character, Color> colorAssignments;
+	public HashMap<Character, Color> colorAssignments;
 
 	public Node parent;
 	public int agentNo;
