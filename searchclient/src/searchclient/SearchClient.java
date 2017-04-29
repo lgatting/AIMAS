@@ -224,7 +224,9 @@ public class SearchClient {
 		       /// add critical cells to critical section
 			   for(int walker1=0; walker1<hmap.get(0).size();walker1++){
 				   for(int walker2=0; walker2<hmap.get(0).size(); walker2++){
-					   if(hmap.get(0).get(walker1).equals(hmap.get(1).get(walker2)) && hmap.get(1).get(walker1).equals(hmap.get(0).get(walker2))){
+					   if((hmap.get(0).get(walker1).equals(hmap.get(1).get(walker2)) && hmap.get(1).get(walker1).equals(hmap.get(0).get(walker2)))
+							   ||  (hmap.get(0).get(walker2).equals(hmap.get(1).get(walker2)) )
+							   ){
 						   //system.err.println(hmap.get(0).get(walker1)); // to be removed
 						   criticalcells.add(hmap.get(0).get(walker1).toString());
 					   }
