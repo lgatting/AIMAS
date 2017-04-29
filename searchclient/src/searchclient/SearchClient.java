@@ -361,6 +361,7 @@ public class SearchClient {
 	    		
 	    	}
 	    	////System.err.println(" ");
+	    	//
 	    }
 	    
 		
@@ -398,8 +399,7 @@ public class SearchClient {
 	}
 	
 	public LinkedList<Node> searchForAgent(Strategy strategy, int agentNo) {
-		int iterations = 0;
-	
+		int iterations = 0;	
 		
 		while (true) {
             if (iterations == 1000) {
