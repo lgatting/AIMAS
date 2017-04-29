@@ -79,14 +79,26 @@ public class Command {
 		this.dir1 = d1;
 		this.dir2 = d2;
 	}
+	
+	@Override
+	public boolean equals(Object o) {
+		Command c = (Command) o;
+		
+		try {
+			return (this.actionType == c.actionType) && (this.dir1 == c.dir1) && (this.dir2 == c.dir2);
+		}
+		catch(NullPointerException e) {
+			return false;
+		}
+	}
 
 	@Override
 	public String toString() {
 		if (this.actionType == Type.Move) {
                //  System.out.println("my ln"+String.format("[%s(%s)]", this.actionType.toString(), this.dir1.toString()));
-			return String.format("[%s(%s)]", this.actionType.toString(), this.dir1.toString());
+			return String.format("%s(%s)", this.actionType.toString(), this.dir1.toString());
                 } else{
                    // System.out.println("my ln"+String.format("[%s(%s,%s)]", this.actionType.toString(), this.dir1.toString(), this.dir2.toString()));
-			return String.format("[%s(%s,%s)]", this.actionType.toString(), this.dir1.toString(), this.dir2.toString());
+			return String.format("%s(%s,%s)", this.actionType.toString(), this.dir1.toString(), this.dir2.toString());
 	}}
 }

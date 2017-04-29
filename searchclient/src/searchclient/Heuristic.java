@@ -36,6 +36,15 @@ public abstract class Heuristic implements Comparator<Node> {
 			}
 		}
 	}
+	
+	public int getAgentAtPos(Node n, int row, int col){
+		for (int agentNo = 0; agentNo < n.agentCount; agentNo++){
+			if(n.agents[agentNo][0] == row && n.agents[agentNo][1] == col){
+				return agentNo;
+			}
+		}
+		return -1;
+	}
 
 	public int h(Node n) {
 		double closestBox = -1;
@@ -47,72 +56,69 @@ public abstract class Heuristic implements Comparator<Node> {
 		
                                   
         
-		for(int agentRow=0; agentRow < n.rows ; agentRow++){
-			for(int agentCol=0; agentCol< n.cols ; agentCol++){
-				if (n.agents[agentRow][agentCol] >= 0){
-					char c = Character.toLowerCase(n.goals[agentRow][agentCol]);
-					if (c > 0) { // prevent agent to step over a goal
-	                    return 10000000 ;
-	                }   
-					for (int row = 1; row < n.rows - 1; row++) {
-						for (int col = 1; col < n.cols - 1; col++) {
-							
-							char b = Character.toLowerCase(n.boxes[row][col]);
-							char g = n.goals[row][col];
-							
-							if(row==agentRow && col==agentCol) table += "@";	
-							else if(b>0) table += n.boxes[row][col] ;
-			             	else if(g>0) table += g ; 
-			             	else table += " ";
-							
-							if (b > 0 && n.goals[row][col] != b) { 
-							
-								
-								int rowdiff = row - agentRow;
-								int coldiff = col - agentCol;
+		for (int agentNo = 0; agentNo < n.agentCount; agentNo++){
+			char c = Character.toLowerCase(n.goals[n.agents[agentNo][0]][n.agents[agentNo][1]]);
+			if (c > 0) { // prevent agent to step over a goal
+                return 10000000 ;
+            }   
+			for (int row = 1; row < n.rows - 1; row++) {
+				for (int col = 1; col < n.cols - 1; col++) {
+					
+					char b = Character.toLowerCase(n.boxes[row][col]);
+					char g = n.goals[row][col];
+					
+					int agentAtPos = getAgentAtPos(n, row, col);
+					if(agentAtPos >= 0) table += agentAtPos;
+					else if(b>0) table += n.boxes[row][col] ;
+	             	else if(g>0) table += g ; 
+	             	else table += " ";
+					
+					if (b > 0 && n.goals[row][col] != b) { 
+					
+						int rowdiff = row - n.agents[agentNo][0];
+						int coldiff = col - n.agents[agentNo][1];
 
-								double distance = Math.sqrt(Math.pow(Math.abs(rowdiff),2) + Math.pow(Math.abs(coldiff),2));
-								
+						double distance = Math.sqrt(Math.pow(Math.abs(rowdiff),2) + Math.pow(Math.abs(coldiff),2));
+						
+						if (closestBox == -1 || closestBox > distance)
+							closestBox = distance;
+						
+						// We now have the distance to closest box from the agent
+						
+						Map<Character, Double> goalDists = new HashMap<Character, Double>();
+						for (int[] goalPos : goals) {
+							int gr = goalPos[0];
+							int gc = goalPos[1];
+							char goalChar = n.goals[gr][gc];
 							
+							if (goalChar == b) {
+								//rowdiff = gr - row;
+								//coldiff = gc - col;
 								
-								 if (closestBox == -1 || closestBox > distance)
-									closestBox = distance;
+								//distance = Math.abs(rowdiff) + Math.abs(coldiff);
 								
-								// We now have the distance to closest box from the agent
+								DistanceBFS dbfs = new DistanceBFS(n.walls, n.boxes, n.colorAssignments, n.rows, n.cols);
+								distance = dbfs.closestBoxFromGoal(gr, gc, goalChar);
 								
-								Map<Character, Double> goalDists = new HashMap<Character, Double>();
-								for (int[] goalPos : goals) {
-									int gr = goalPos[0];
-									int gc = goalPos[1];
-									char goalChar = n.goals[gr][gc];
-									
-									if (goalChar == b) {
-										rowdiff = gr - row;
-										coldiff = gc - col;
-										
-										distance = Math.abs(rowdiff) + Math.abs(coldiff);
-										
-										if (!goalDists.containsKey(goalChar))
-											goalDists.put(goalChar, distance);
-										
-										else if (goalDists.get(goalChar) > distance) {
-											goalDists.put(goalChar, distance);
-										}
-									}
+								if (!goalDists.containsKey(goalChar))
+									goalDists.put(goalChar, distance);
+								
+								else if (goalDists.get(goalChar) > distance) {
+									goalDists.put(goalChar, distance);
 								}
-								
-								Iterator it = goalDists.entrySet().iterator();
-								while(it.hasNext()) {
-									Map.Entry<Character, Double> pair = (Map.Entry<Character, Double>)it.next();
-									goalToBoxDistances += pair.getValue();
-								}
-								
-								// Now we have found closest distance between goals and their box
 							}
-						}	
-						table += '\n';
+						}
+						
+						Iterator it = goalDists.entrySet().iterator();
+						while(it.hasNext()) {
+							Map.Entry<Character, Double> pair = (Map.Entry<Character, Double>)it.next();
+							goalToBoxDistances += pair.getValue();
+						}
+						
+						// Now we have found closest distance between goals and their box
 					}
-				}
+				}	
+				table += '\n';
 			}
 		}
 		
