@@ -154,10 +154,14 @@ public class SearchClient {
 		this.initialState.setcolormap(colorAssignments);
 	}
 
+	HashMap<Integer, LinkedList> hmap = new HashMap<Integer, LinkedList>();
+	int[] plancounter ;
+
 	public LinkedList<String> Search(StrategyType strategyType, SearchClient client) throws IOException {
-		System.err.format("Search starting with strategy %s.\n", strategyType);
+		//system.err.format("Search starting with strategy %s.\n", strategyType);
 		
 		int longestPlanSize = 0;
+		
 		HashMap<Integer, LinkedList<Node>> agentPlans = new HashMap<Integer, LinkedList<Node>>();
 		
 		for(int agentNo = 0; agentNo < this.agentCount; agentNo++){
@@ -165,9 +169,9 @@ public class SearchClient {
 			this.initialState.agentNo = agentNo;
 			strategy.addToFrontier(this.initialState);
 			
-			System.err.println("Agent: " + agentNo);
+			//system.err.println("Agent: " + agentNo);
 			LinkedList<Node> planForAgent = searchForAgent(strategy, agentNo);
-			System.err.println(agentNo + " has plan of size " + planForAgent.size());
+			//system.err.println(agentNo + " has plan of size " + planForAgent.size());
 			agentPlans.put(agentNo, planForAgent);
 			
 			if(planForAgent.size() >= longestPlanSize) {
@@ -176,26 +180,204 @@ public class SearchClient {
 		}
 		
 		
+		for(int i=0;i<this.agentCount;i++){
+			System.err.println("Plan for agent "+i);
+			for(int j=0; j<longestPlanSize;j++){
+				System.err.println(agentPlans.get(i).get(j).action.toString());
+		}
+			System.err.println(" ");
+			}
+	
+	
 		
-		/*Iterator it = agentPlans.entrySet().iterator();
-	    while (it.hasNext()) {
-	        Map.Entry pair = (Map.Entry)it.next();
-	        System.out.println(pair.getKey() + " = " + pair.getValue().toString());
-	        it.remove(); // avoids a ConcurrentModificationException
-	    }*/
+			for(int agent = 0; agent < this.agentCount; agent++) {	    
+			 hmap.put(agent, new  LinkedList<String>()); /// add empty cs linked for each agent
+			}
 	    
+			/// add route coordinates to corresponding linked list
+		    for(int step = 0; step < longestPlanSize; step++) {
+		    	for(int agent = 0; agent < this.agentCount; agent++) {
+		    		String newagentpos=""  ;
+		    		if(step < agentPlans.get(agent).size()){
+		    			int newagentrow = agentPlans.get(agent).get(step).agents[agent][0]; // agent row
+			    		int newagentcol = agentPlans.get(agent).get(step).agents[agent][1]; // agent col
+			    		newagentpos = newagentrow+"-"+newagentcol ;
+		    		}
+		    		else {
+		    			newagentpos = "-" ;
+		    		}
+		    		
+		    		hmap.get(agent).add(newagentpos);
+		    	}
+		    }
+			
+		    // select pair of routes  
+		    
+			 // for every pair find critical section
+			      // assume we have only one pair
+                  // find critical cells
+		             /// implement solution for many critical sections
+		    
+		    
+		    LinkedList<String> criticalcells = new  LinkedList<String>();
+		    int usingcs = -1 ;
+		     
+		       /// add critical cells to critical section
+			   for(int walker1=0; walker1<hmap.get(0).size();walker1++){
+				   for(int walker2=0; walker2<hmap.get(0).size(); walker2++){
+					   if(hmap.get(0).get(walker1).equals(hmap.get(1).get(walker2)) && hmap.get(1).get(walker1).equals(hmap.get(0).get(walker2))){
+						   //system.err.println(hmap.get(0).get(walker1)); // to be removed
+						   criticalcells.add(hmap.get(0).get(walker1).toString());
+					   }
+				   }
+			   }
+			   
+			   
+		    
+		    
 		LinkedList<String> jointActions = new LinkedList<String>();
+		boolean readyToleave = false ;
+		int readyincounter = 0;
 		
+		plancounter = new int[this.agentCount];
+		int[] planssteps = new int[this.agentCount];
+		
+		/// set all plancounter entries to largestPlanSize
+		for(int i=0;i<plancounter.length;i++){
+			plancounter[i] =  hmap.get(0).size() ;
+		}
+		
+		// set all planssteps to 0
+		for(int i=0;i<planssteps.length;i++){
+			planssteps[i] =  0 ;
+		}
+		
+	  
+		
+		
+		while(arepAllPlanCounterEntriesnull()==false){
+			
+			String jointAction = "[";
+			
+			for(int agent=0; agent<this.agentCount; agent++){
+				
+				// get agent pos
+			
+                if(planssteps[agent]>= agentPlans.get(agent).size()){
+                	jointAction += "NoOp";
+	    		}
+                
+	    		else {
+	    			
+					int newagentrow = agentPlans.get(agent).get(planssteps[agent]).agents[agent][0]; // agent row
+		    		int newagentcol = agentPlans.get(agent).get(planssteps[agent]).agents[agent][1]; // agent col
+		    		String newagentpos = newagentrow+"-"+newagentcol ;
+		    		
+	    			
+	    		if(criticalcells.getLast().equals(newagentpos) &&  usingcs==agent ){
+	    			
+	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();			
+	    		    planssteps[agent]++;
+	    		    plancounter[agent]--;
+	    		    readyToleave = true ;
+	    			System.err.print(" agent "+agent+" leaves critical section");
+	    		}
+	    		else if(criticalcells.getFirst().equals(newagentpos) && usingcs==-1){
+	    			usingcs = agent ;
+	    			System.err.print(" agent "+agent+" is in the critical section");
+	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
+	    			 planssteps[agent]++;
+	    			 plancounter[agent]--;
+	    			
+	    		}
+	    		
+	    		else if(usingcs==agent){
+	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
+	    			 planssteps[agent]++;
+		    		 plancounter[agent]--;
+	    		}
+	    		
+	    		else if(usingcs!=-1 && usingcs!=agent){
+	    			jointAction += "NoOp";
+	    			
+	    		}
+	    		
+	    		else {
+	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
+	    			 planssteps[agent]++;
+		    		 plancounter[agent]--;
+	    		}
+	    		
+			}
+	    		
+	    		if(agent < this.agentCount - 1) {	// Add commas for all cases except the last one.
+	    			jointAction += ",";
+	    		}
+	    		
+			}
+			
+			if(readyToleave==true && readyincounter<2){
+				readyincounter++;
+			}
+			else if(readyincounter==2){
+				usingcs = -1 ;
+				readyincounter = 0;
+				readyToleave=false;
+			}
+			
+			jointAction += "]";
+			System.err.println(jointAction);
+	    	jointActions.add(jointAction);
+			
+		}
+		 
+		
+		/*
+		 * int recoverystep = 10000000 ;
 	    for(int step = 0; step < longestPlanSize; step++) {
+	    	
 	    	String jointAction = "[";
 	    	for(int agent = 0; agent < this.agentCount; agent++) {
-	    		System.err.println("YEAH");
+	    		//system.err.println("YEAH");
+	    	
 	    		if(step < agentPlans.get(agent).size()){
-	    			jointAction += agentPlans.get(agent).get(step).action.toString();
+
+	    			int newagentrow = agentPlans.get(agent).get(step).agents[agent][0]; // agent row
+		    		int newagentcol = agentPlans.get(agent).get(step).agents[agent][1]; // agent col
+		    		String newagentpos = newagentrow+"-"+newagentcol ;
+		    		
+		    	
+		    		if(criticalcells.getLast().equals(newagentpos) &&  usingcs==agent ){
+		    			usingcs = -1 ;
+		    			jointAction += agentPlans.get(agent).get(step).action.toString();
+		    			step = recoverystep ;
+		    			
+		    		}
+		    		
+		    		else if(criticalcells.getFirst().equals(newagentpos) && (usingcs==-1 || usingcs==agent )){
+		    			usingcs = agent ;
+		    			jointAction += agentPlans.get(agent).get(step).action.toString();
+		    		}
+		    		else if(usingcs!=-1 && usingcs!=agent){
+		    			if(step<recoverystep) recoverystep = step ;
+		    			//system.err.print("step="+recoverystep);
+		    			jointAction += "NoOp";
+		    		}
+		    		else{
+		    			jointAction += agentPlans.get(agent).get(step).action.toString();
+		    		}
+	    			
 	    		}
 	    		else {
 	    			jointAction += "NoOp";
+		    	
 	    		}
+	    	
+	    		
+	    	
+	    
+	    		
+	    		
 	    		if(agent < this.agentCount - 1) {	// Add commas for all cases except the last one.
 	    			jointAction += ",";
 	    		}
@@ -203,8 +385,34 @@ public class SearchClient {
 	    	jointAction += "]";
 	    	jointActions.add(jointAction);
 	    }
+	    */
 		
+	//print agents route based on their location to be removed
+	    for(int k=0; k<hmap.size(); k++){
+
+	    	for(int j=0; j<hmap.get(k).size() ; j++){
+	    		
+	    		//system.err.print(hmap.get(k).get(j)+", ");
+	    		
+	    	}
+	    	//system.err.println(" ");
+	    }
+	    
+		
+	
+	   
+	    
 		return jointActions;
+	}
+	
+	
+	public boolean arepAllPlanCounterEntriesnull(){
+		
+		for(int i=0; i<plancounter.length; i++){
+			if(plancounter[i]!=0) return false ;
+		}
+		
+		return true ;
 	}
 	
 	public Strategy createStrategy(StrategyType searchType, SearchClient client) {
@@ -322,66 +530,60 @@ public class SearchClient {
             System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
         }
         
-        DistanceBFS dbfs = new DistanceBFS(client.initialState.walls, client.initialState.boxes, client.colorAssignments, client.initialState.rows, client.initialState.cols);
-        
-        int[] agentPos = client.initialState.agents[1];
-        
-        System.err.println(dbfs.closestMovableBoxFromAgent(agentPos[0], agentPos[1], 1));
-        
-//		LinkedList<String> solution;
-//		try {
-//			solution = client.Search(strategyType, client);
-//		} catch (OutOfMemoryError ex) {
-//			System.err.println("Maximum memory usage exceeded.");
-//			solution = null;
-//		}
-//
-//		if (solution == null) {
-//			//System.err.println(strategy.searchStatus());
-//			System.err.println("Unable to solve level.");
-//			System.exit(0);
-//		} else {
-//			//System.err.println("\nSummary for " + strategy.toString());
-//			System.err.println("Found solution of length " + solution.size());
-//			//System.err.println(strategy.searchStatus());
-//
-//			for (String s : solution) {	// Create separate object?
-////				String act = "[";
-////				try{
-////					act += n.action.toString();
-////				}
-////				 catch(NullPointerException e){
-////					act += "NoOp"; 
-////				 }
-////				for(int i = 1; i < n.agentCount; i++){
-////					try{
-////						act += "," + n.action.toString();
-////					}
-////					 catch(NullPointerException e){
-////						act += ",NoOp"; 
-////					 }
-////				}
-////				act += "]";
-//				System.err.println(s);
-//				System.out.println(s);
-//				String response = serverMessages.readLine();
-//				if (response.contains("false")) {
-//					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
-//					//System.err.format("%s was attempted in \n%s\n", s, n.toString());
-//					break;
+		LinkedList<String> solution;
+		try {
+			solution = client.Search(strategyType, client);
+		} catch (OutOfMemoryError ex) {
+			System.err.println("Maximum memory usage exceeded.");
+			solution = null;
+		}
+
+		if (solution == null) {
+			//System.err.println(strategy.searchStatus());
+			System.err.println("Unable to solve level.");
+			System.exit(0);
+		} else {
+			//System.err.println("\nSummary for " + strategy.toString());
+			System.err.println("Found solution of length " + solution.size());
+			//System.err.println(strategy.searchStatus());
+
+			for (String s : solution) {	// Create separate object?
+//				String act = "[";
+//				try{
+//					act += n.action.toString();
 //				}
-//			}
-//			RoomDetector rd = new RoomDetector();
-//			int[][] roomRegions = rd.detectRooms(client.initialState.walls, client.initialState.rows, client.initialState.cols,
-//						   						 client.initialState.agents[0][0], client.initialState.agents[0][1]);
-//			
-//			
-//			for(int i = 0; i < client.initialState.rows; i++){
-//				for(int j = 0; j < client.initialState.cols; j++){
-//					System.err.print(roomRegions[i][j]);
+//				 catch(NullPointerException e){
+//					act += "NoOp"; 
+//				 }
+//				for(int i = 1; i < n.agentCount; i++){
+//					try{
+//						act += "," + n.action.toString();
+//					}
+//					 catch(NullPointerException e){
+//						act += ",NoOp"; 
+//					 }
 //				}
-//				System.err.println("");
-//			}
-//		}
+//				act += "]";
+				System.err.println(s);
+				System.out.println(s);
+				String response = serverMessages.readLine();
+				if (response.contains("false")) {
+					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
+					//System.err.format("%s was attempted in \n%s\n", s, n.toString());
+					break;
+				}
+			}
+			RoomDetector rd = new RoomDetector();
+			int[][] roomRegions = rd.detectRooms(client.initialState.walls, client.initialState.rows, client.initialState.cols,
+						   						 client.initialState.agents[0][0], client.initialState.agents[0][1]);
+			
+			
+			for(int i = 0; i < client.initialState.rows; i++){
+				for(int j = 0; j < client.initialState.cols; j++){
+					System.err.print(roomRegions[i][j]);
+				}
+				System.err.println("");
+			}
+		}
 	}
 }
