@@ -92,10 +92,13 @@ public abstract class Heuristic implements Comparator<Node> {
 							char goalChar = n.goals[gr][gc];
 							
 							if (goalChar == b) {
-								rowdiff = gr - row;
-								coldiff = gc - col;
+								//rowdiff = gr - row;
+								//coldiff = gc - col;
 								
-								distance = Math.abs(rowdiff) + Math.abs(coldiff);
+								//distance = Math.abs(rowdiff) + Math.abs(coldiff);
+								
+								DistanceBFS dbfs = new DistanceBFS(n.walls, n.boxes, n.colorAssignments, n.rows, n.cols);
+								distance = dbfs.closestBoxFromGoal(gr, gc, goalChar);
 								
 								if (!goalDists.containsKey(goalChar))
 									goalDists.put(goalChar, distance);
