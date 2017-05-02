@@ -158,7 +158,7 @@ public class SearchClient {
 	int[] plancounter ;
 
 	public LinkedList<String> Search(StrategyType strategyType, SearchClient client) throws IOException {
-		////System.err.format("Search starting with strategy %s.\n", strategyType);
+		System.err.format("Search starting with strategy %s.\n", strategyType);
 		
 		int longestPlanSize = 0;
 		
