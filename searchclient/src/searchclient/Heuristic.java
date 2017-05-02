@@ -11,6 +11,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import models.*;
+
 import searchclient.NotImplementedException;
 
 public abstract class Heuristic implements Comparator<Node> {
@@ -46,134 +48,140 @@ public abstract class Heuristic implements Comparator<Node> {
 		return -1;
 	}
 
+	/**
+	 * Whether the first position (x1, y1) is a direct neighbor to x2, y2.
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @return True if it is, false otherwise.
+	 */
+	private boolean isNeighboringPosition(int x1, int y1, int x2, int y2) {
+		return Math.abs(x1 - x2) + Math.abs(y1 - y2) == 1;
+	}
+
 	public int h(Node n) {
-		double closestBox = -1;
-		double goalToBoxDistances = 0;
-		int boxesNotSatisfied = goals.size();
+		// Since we cannot use decimal numbers for the comparator, we'll multiply the result to account for the small differences
+		int precision = 1000;
 		
-		String table = "" ;
+		if (n.agentsActions.size() == 0) {
+			// No other HLAs; heuristic function cannot help 
+			return 1;
+		}
 		
+		HighLevelAction hla = n.agentsActions.get(0);
 		
-                                  
-        
-		for (int agentNo = 0; agentNo < n.agentCount; agentNo++){
-			char c = Character.toLowerCase(n.goals[n.agents[agentNo][0]][n.agents[agentNo][1]]);
-			if (c > 0) { // prevent agent to step over a goal
-                return 10000000 ;
-            }   
+		if (hla instanceof GoToHLA) {
+			GoToHLA action = (GoToHLA) hla;
+
+			int agentRow = n.agents[n.agentNo][0];
+			int agentCol = n.agents[n.agentNo][1];
+			int boxRow = -1;
+			int boxCol = -1;
+			
 			for (int row = 1; row < n.rows - 1; row++) {
 				for (int col = 1; col < n.cols - 1; col++) {
-					
-					char b = Character.toLowerCase(n.boxes[row][col]);
-					char g = n.goals[row][col];
-					
-					int agentAtPos = getAgentAtPos(n, row, col);
-					if(agentAtPos >= 0) table += agentAtPos;
-					else if(b>0) table += n.boxes[row][col] ;
-	             	else if(g>0) table += g ; 
-	             	else table += " ";
-					
-					if (b > 0 && n.goals[row][col] != b) { 
-					
-						int rowdiff = row - n.agents[agentNo][0];
-						int coldiff = col - n.agents[agentNo][1];
-
-						double distance = Math.sqrt(Math.pow(Math.abs(rowdiff),2) + Math.pow(Math.abs(coldiff),2));
+					if (n.boxIds[row][col] == action.box.id) {
+						// We have found the box towards which we want to move
 						
-						if (closestBox == -1 || closestBox > distance)
-							closestBox = distance;
-						
-						// We now have the distance to closest box from the agent
-						
-						Map<Character, Double> goalDists = new HashMap<Character, Double>();
-						for (int[] goalPos : goals) {
-							int gr = goalPos[0];
-							int gc = goalPos[1];
-							char goalChar = n.goals[gr][gc];
-							
-							if (goalChar == b) {
-								//rowdiff = gr - row;
-								//coldiff = gc - col;
-								
-								//distance = Math.abs(rowdiff) + Math.abs(coldiff);
-								
-								DistanceBFS dbfs = new DistanceBFS(n.walls, n.boxes, n.colorAssignments, n.rows, n.cols);
-								distance = dbfs.closestBoxFromGoal(gr, gc, goalChar);
-								
-								if (!goalDists.containsKey(goalChar))
-									goalDists.put(goalChar, distance);
-								
-								else if (goalDists.get(goalChar) > distance) {
-									goalDists.put(goalChar, distance);
-								}
-							}
-						}
-						
-						Iterator it = goalDists.entrySet().iterator();
-						while(it.hasNext()) {
-							Map.Entry<Character, Double> pair = (Map.Entry<Character, Double>)it.next();
-							goalToBoxDistances += pair.getValue();
-						}
-						
-						// Now we have found closest distance between goals and their box
+						boxRow = row;
+						boxCol = col;
 					}
-				}	
-				table += '\n';
-			}
-		}
-		
-		
-		
-		
-		
-		for (int i = 0; i < goals.size(); i++) {
-			int[] goalPos = goals.get(i);
-			int gr = goalPos[0];
-			int gc = goalPos[1];
-
-            if (Character.toLowerCase(n.boxes[gr][gc]) == n.goals[gr][gc]) {
-            	boxesNotSatisfied -= 1;            
-			}
-             
-            if(oldBoxesNotSatisfied!=boxesNotSatisfied) {
-            	closestBox = 0 ;
-        	}
-            oldBoxesNotSatisfied = boxesNotSatisfied;                      
-        }
-		
-		
-		// Now we also know how many boxes have not been satisfied so far
-		/*
-        if(n.agentCol==21 && n.agentRow==1) {
-		try {
-                    String txt = "----choice "+'\n'+table+ +'\n'+"closestBox"+(int)Math.round(closestBox)+" "
-                            + "goalToBoxDistances"+(int)Math.round(goalToBoxDistances)+" "
-                              + "boxesNotSatisfied"+(int)Math.round(boxesNotSatisfied)+" "                  
-                              + "total"+(int)Math.round(closestBox + goalToBoxDistances + boxesNotSatisfied)+" "
-                            +'\n'+'\n';
-    Files.write(Paths.get("log.txt"), txt.getBytes(), StandardOpenOption.APPEND);
-}catch (IOException e) {
-    //exception handling left as an exercise for the reader
-}}
-*/
-		
-		return (int) (goalToBoxDistances + boxesNotSatisfied);
-	}
-	
-	
-	/*public int findShortestDistanceToBox(Node n){
-		for (int row = 1; row < n.rows - 1; row++) {
-			for (int col = 1; col < n.cols - 1; col++) {
-				char b = n.boxes[row][col];
-				if(b > 0){
-					char goals[][] = n.goals;
 					
+					// Sufficient to check just row/col since once either of them has been set to something else, then
+					// the other value must've been set as well
+					if (boxRow != -1) {
+						if (isNeighboringPosition(agentRow, agentCol, boxRow, boxCol)) {
+							// This action has been satisfied, move to next HLA
+							n.pastActions.add(n.agentsActions.remove(0));
+							System.err.println("removed1");
+							System.err.println(n.agentsActions);
+							n.strategy.refreshFrontier();
+							return h(n);
+						} 
+							
+						// We now have found both the agent and the box; 
+						// Calculate the distance between them
+
+						int w = Math.abs(agentRow - boxRow);
+						int h = Math.abs(agentCol - boxCol);
+
+						double dist = Math.sqrt(w*w + h*h);
+						
+						int cost = (int)Math.round(dist * precision);
+						
+						
+						return cost;
+					}
 				}
 			}
+		} else if (hla instanceof SatisfyGoalHLA) {
+			SatisfyGoalHLA action = (SatisfyGoalHLA) hla;
+
+			int agentRow = n.agents[n.agentNo][0];
+			int agentCol = n.agents[n.agentNo][1];
+			int boxRow = -1;
+			int boxCol = -1;
+			int goalRow = -1;
+			int goalCol = -1;
+			
+			for (int row = 1; row < n.rows - 1; row++) {
+				for (int col = 1; col < n.cols - 1; col++) {
+					if (n.boxIds[row][col] == action.box.id) {
+						// We have found the box towards which we want to move
+						
+						boxRow = row;
+						boxCol = col;
+					}
+					
+					if (n.goalIds[row][col] == action.box.goal.id) {
+						// We have found the goal, which we want to satisfy
+
+						goalRow = row;
+						goalCol = col;
+					}
+					
+					// Sufficient to check just row/col since once either of them has been set to something else, then
+					// the other value must've been set as well
+					if (boxRow != -1 && goalRow != -1) {
+						if (goalRow == boxRow && goalCol == boxCol) {
+							// This action has been satisfied, move to next HLA
+							n.pastActions.add(n.agentsActions.remove(0));
+							System.err.println("removed2");
+							System.err.println(n.agentsActions);
+							n.strategy.refreshFrontier();
+							return h(n);
+						}
+							
+						// We now have found both the agent and the box; 
+						// Calculate the distance between them
+
+						int w = Math.abs(goalRow - boxRow);
+						int h = Math.abs(goalCol - boxCol);
+
+						double distBG = Math.sqrt(w*w + h*h);
+						
+						w = Math.abs(agentRow - boxRow);
+						h = Math.abs(agentCol - boxCol);
+						
+						double distAB = Math.sqrt(w*w + h*h);
+						
+						double dist = distBG;
+						
+						int cost = (int)Math.round(dist * precision);
+						
+						return cost;
+					}
+				}
+			}
+		} else {
+			// Unknown action; heuristic is unable to help
+			return 1;
 		}
 		
-		return 0;
-	}*/
+		// This scenario will not happen since both agent and the box must be eventually found
+		return 1;
+	}
 
 	public abstract int f(Node n);
 

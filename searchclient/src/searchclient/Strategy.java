@@ -50,6 +50,8 @@ public abstract class Strategy extends Thread {
 	public abstract int countFrontier();
 
 	public abstract boolean frontierIsEmpty();
+	
+	public abstract void refreshFrontier();
 
 	@Override
 	public abstract String toString();
@@ -91,6 +93,9 @@ public abstract class Strategy extends Thread {
 		public boolean inFrontier(Node n) {
 			return frontierSet.contains(n);
 		}
+		
+		@Override
+		public void refreshFrontier() { }
 
 		@Override
 		public String toString() {
@@ -137,6 +142,9 @@ public abstract class Strategy extends Thread {
         }
 		
 		@Override
+		public void refreshFrontier() { }
+		
+		@Override
         public String toString() {
 			return "Depth-first Search";
 		}
@@ -155,43 +163,22 @@ public abstract class Strategy extends Thread {
 			heuristic = h;
 			
 			frontier = new PriorityQueue<Node>(heuristic);
-                        frontierSet = new HashSet<Node>();
-                        
+            frontierSet = new HashSet<Node>();
 		}
 
-	
-		
 		@Override
 		public Node getAndRemoveLeaf() {
 			Node n = frontier.poll();
 			
-	
-		
 			frontierSet.remove(n);
                      
 			return n;
 		}
 		
-		
-
-                /*
-                public boolean agentONgoal(Node n){
-                    
-                   
-				char b = Character.toLowerCase(n.goals[n.agentRow][n.agentCol]);
-				if (b > 0) { // if not a goal 
-                                    return true ;
-                                }
-                                else return false ;
-                }
-                */
 		@Override
 		public void addToFrontier(Node n) {
-                  
-                 //  if(!agentONgoal(n)){
-			frontier.offer(n);
-                     frontierSet.add(n);
-                ///   }
+			frontier.add(n);
+            frontierSet.add(n);
 		}
 
 		@Override
@@ -207,6 +194,16 @@ public abstract class Strategy extends Thread {
 		@Override
 		public boolean inFrontier(Node n) {
             return frontierSet.contains(n);
+		}
+		
+		@Override
+		public void refreshFrontier() {
+			//Node n = frontier.poll();
+			
+			//frontier = new PriorityQueue<Node>(heuristic);
+            //frontierSet = new HashSet<Node>();
+            
+            //addToFrontier(n);
 		}
 
 		@Override

@@ -8,12 +8,16 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import models.*;
 
 
 
@@ -28,16 +32,30 @@ public class SearchClient {
 	public Node initialState;
 	public static int agentCount;
 	public HashMap<Character, Color> colorAssignments;
+	HashMap<Integer, LinkedList> hmap = new HashMap<Integer, LinkedList>();
+	int[] plancounter;
+	
+	private Set<Goal> discoveredGoals;
+	private Set<Box> discoveredBoxes;
+	private Set<Agent> discoveredAgents;
 	
 	public static enum StrategyType {
 		bfs, dfs, astar, wastar, greedy
 	}
 
+	/**
+	 * Reads a level from a file and accordingly sets up internal data structure representing that level. 
+	 * @param serverMessages
+	 * @throws Exception
+	 */
 	public SearchClient(BufferedReader serverMessages) throws Exception {
 		List<String> lines = new ArrayList<String>();
 	
-		
 		colorAssignments = new HashMap<Character, Color>();
+
+		discoveredGoals = new HashSet<Goal>();
+		discoveredBoxes = new HashSet<Box>();
+		discoveredAgents = new HashSet<Agent>();
 		
 		// Read lines specifying colors
 		String fileline = serverMessages.readLine();
@@ -60,11 +78,10 @@ public class SearchClient {
 					pattern = Pattern.compile("([0-9A-Z])");
 					matcher = pattern.matcher(line);
 					while (matcher.find()){
-						////System.err.println(matcher.group(1).charAt(0));
 						colorAssignments.put(matcher.group(1).charAt(0), cColor);
 					}
 				} catch (IllegalArgumentException e){
-					//System.err.println("Invalid color");
+					System.err.println("Invalid color");
 					System.exit(1);
 				}
 			}
@@ -109,6 +126,8 @@ public class SearchClient {
 						System.exit(1);
 					}
 					
+					discoveredAgents.add(new Agent(agentNo, colorAssignments.get(chr)));
+					
 					agentFound[agentNo] = true;
 					agentCount++;
 				}
@@ -119,6 +138,9 @@ public class SearchClient {
 		this.initialState = new Node(null, rows, cols, agentCount);
 		
 		row = 0;
+		
+		int nextBoxId = 1;
+		int nextGoalId = 1;
 
 		for (String line : lines) {
 			for (int col = 0; col < line.length(); col++) {
@@ -139,9 +161,13 @@ public class SearchClient {
 						colorAssignments.put(chr, Color.blue);
 					}
 					this.initialState.boxes[row][col] = chr;
+					this.initialState.boxIds[row][col] = nextBoxId++;
+					this.discoveredBoxes.add(new Box(this.initialState.boxIds[row][col], chr, colorAssignments.get(chr)));
 					
 				} else if ('a' <= chr && chr <= 'z') { // Goal.
 					this.initialState.goals[row][col] = chr;
+					this.initialState.goalIds[row][col] = nextGoalId++;
+					this.discoveredGoals.add(new Goal(this.initialState.goalIds[row][col], chr));
 				} else if (chr == ' ') {
 					// Free space.
 				} else {
@@ -153,95 +179,140 @@ public class SearchClient {
 		}
 		this.initialState.setcolormap(colorAssignments);
 	}
-
-	HashMap<Integer, LinkedList> hmap = new HashMap<Integer, LinkedList>();
-	int[] plancounter ;
-
-	public LinkedList<String> Search(StrategyType strategyType, SearchClient client) throws IOException {
-		System.err.format("Search starting with strategy %s.\n", strategyType);
+	
+	/**
+	 * Generates a plan of high level actions for given agent.
+	 * @param agent
+	 * @return
+	 */
+	private List<HighLevelAction> generateHLAPlan(Agent agent) {
+		List<HighLevelAction> plan = new ArrayList<HighLevelAction>();
 		
-		int longestPlanSize = 0;
+		for (Box box : agent.boxes) {
+			plan.add(new GoToHLA(box));
+			plan.add(new SatisfyGoalHLA(box, box.goal));
+		}
+		
+		return plan;
+	}
+	
+	/**
+	 * Returns the agent object with given agent number/ID.
+	 * @param agentNo
+	 * @return
+	 */
+	private Agent getAgentObject(int agentNo) {
+		for (Agent agent : discoveredAgents)
+			if (agent.id == agentNo)
+				return agent;
+		
+		return null;
+	}
+
+	/**
+	 * Finds plans for all agents and returns them as a dictionary where the key is the agents' ID and value is the plan itself.
+	 * @param strategyType
+	 * @param client
+	 * @return
+	 */
+	private HashMap<Integer, LinkedList<Node>> discoverAgentPlans(StrategyType strategyType, SearchClient client) {
 		
 		HashMap<Integer, LinkedList<Node>> agentPlans = new HashMap<Integer, LinkedList<Node>>();
 		
-		for(int agentNo = 0; agentNo < this.agentCount; agentNo++){
+		for (int agentNo = 0; agentNo < this.agentCount; agentNo++) {
 			Strategy strategy = createStrategy(strategyType, client);
+			this.initialState.agentsActions = generateHLAPlan(getAgentObject(agentNo));
+			
+			System.err.println("HLA plan for agent " + agentNo + ": " + this.initialState.agentsActions);
+			
 			this.initialState.agentNo = agentNo;
+			this.initialState.strategy = strategy;
 			strategy.addToFrontier(this.initialState);
 			
-			////System.err.println("Agent: " + agentNo);
+			System.err.println("Creating plan for agent " + agentNo);
 			LinkedList<Node> planForAgent = searchForAgent(strategy, agentNo);
-			////System.err.println(agentNo + " has plan of size " + planForAgent.size());
 			agentPlans.put(agentNo, planForAgent);
-			
-			if(planForAgent.size() >= longestPlanSize) {
-				longestPlanSize = planForAgent.size();
+		}
+
+		return agentPlans;
+	}
+	
+	/**
+	 * Returns the length of the longest plan amongst all agents. 
+	 * @param plans Dictionary produced by the discoverAgentPlans method.
+	 * @return Length of the longest plan.
+	 */
+	private int longestPlanSize(HashMap<Integer, LinkedList<Node>> plans) {
+		int result = 0;
+		
+		for (LinkedList<Node> plan : plans.values())
+			if (plan.size() > result)
+				result = plan.size();
+		
+		return result;
+	}
+	
+	/**
+	 * Takes the generated agent plans and resolves any conflicts that may have occurred.
+	 * @param agentPlans
+	 * @return An array of strings where each string is a representation of joint action ready to be sent to a server.
+	 */
+	private LinkedList<String> resolveConflicts(HashMap<Integer, LinkedList<Node>> agentPlans) {
+		for(int agent = 0; agent < this.agentCount; agent++) {	    
+			hmap.put(agent, new  LinkedList<String>()); /// add empty cs linked for each agent
+		}
+    
+		/// add route coordinates to corresponding linked list
+	    for(int step = 0; step < longestPlanSize(agentPlans); step++) {
+	    	for(int agent = 0; agent < this.agentCount; agent++) {
+	    		String newagentpos=""  ;
+	    		if(step < agentPlans.get(agent).size()){
+	    			int newagentrow = agentPlans.get(agent).get(step).agents[agent][0]; // agent row
+		    		int newagentcol = agentPlans.get(agent).get(step).agents[agent][1]; // agent col
+		    		newagentpos = newagentrow+"-"+newagentcol ;
+	    		}
+	    		else {
+	    			newagentpos = "-" ;
+	    		}
+	    		
+	    		hmap.get(agent).add(newagentpos);
+	    	}
+	    }
+	    
+	    for(int agent = 0; agent < this.agentCount; agent++) {	    
+			for(int j=0 ; j< hmap.get(0).size() ; j++){
+				//System.err.print(hmap.get(agent).get(j)+", ");
 			}
+			//System.err.println(" ");
 		}
 		
-	
-	
-		
-			for(int agent = 0; agent < this.agentCount; agent++) {	    
-			 hmap.put(agent, new  LinkedList<String>()); /// add empty cs linked for each agent
-			}
+	    // select pair of routes  
 	    
-			/// add route coordinates to corresponding linked list
-		    for(int step = 0; step < longestPlanSize; step++) {
-		    	for(int agent = 0; agent < this.agentCount; agent++) {
-		    		String newagentpos=""  ;
-		    		if(step < agentPlans.get(agent).size()){
-		    			int newagentrow = agentPlans.get(agent).get(step).agents[agent][0]; // agent row
-			    		int newagentcol = agentPlans.get(agent).get(step).agents[agent][1]; // agent col
-			    		newagentpos = newagentrow+"-"+newagentcol ;
-		    		}
-		    		else {
-		    			newagentpos = "-" ;
-		    		}
-		    		
-		    		hmap.get(agent).add(newagentpos);
-		    	}
-		    }
-		    
-		    for(int agent = 0; agent < this.agentCount; agent++) {	    
-				for(int j=0 ; j< hmap.get(0).size() ; j++){
-					//System.err.print(hmap.get(agent).get(j)+", ");
-				}
-				//System.err.println(" ");
-			}
-			
-		    // select pair of routes  
-		    
-			 // for every pair find critical section
-			      // assume we have only one pair
-                  // find critical cells
-		             /// implement solution for many critical sections
-		    
-		    
-		    LinkedList<String> criticalcells = new  LinkedList<String>();
-		    int usingcs = -1 ;
-		    boolean sharecs = false ;
-		    int sharecsdelay = 0 ;
-		    
-		       /// add critical cells to critical section
-			   for(int walker1=0; walker1<hmap.get(0).size();walker1++){
-				   for(int walker2=0; walker2<hmap.get(0).size(); walker2++){
-					   if((hmap.get(0).get(walker1).equals(hmap.get(1).get(walker2)) && hmap.get(1).get(walker1).equals(hmap.get(0).get(walker2)))
-							   ||  (hmap.get(0).get(walker2).equals(hmap.get(1).get(walker2)) )
-							   ){
-						   ////System.err.println(hmap.get(0).get(walker1)); // to be removed
-						   criticalcells.add(hmap.get(0).get(walker1).toString());
-					   }
-					   
-					   if(hmap.get(0).get(walker2).equals(hmap.get(1).get(walker2))){
-						   sharecs = true ;
-					   }
-				   }
-			   }
+		 // for every pair find critical section
+		      // assume we have only one pair
+              // find critical cells
+	             /// implement solution for many critical sections
+	    
+	    
+	    LinkedList<String> criticalcells = new  LinkedList<String>();
+	    int usingcs = -1 ;
+	    boolean sharecs = false ;
+	    int sharecsdelay = 0 ;
+	    
+	    // add critical cells to critical section
+	    for(int walker1=0; walker1<hmap.get(0).size();walker1++) {
+	    	for(int walker2=0; walker2<hmap.get(0).size(); walker2++){
+	    		if ((hmap.get(0).get(walker1).equals(hmap.get(1).get(walker2)) && hmap.get(1).get(walker1).equals(hmap.get(0).get(walker2)))
+	    				||  (hmap.get(0).get(walker2).equals(hmap.get(1).get(walker2)))) {
+	    			criticalcells.add(hmap.get(0).get(walker1).toString());
+	    		}
 			   
-			   
-		    
-		    
+    			if(hmap.get(0).get(walker2).equals(hmap.get(1).get(walker2))){
+				   	sharecs = true;
+			  	}
+	    	}
+	    }
+
 		LinkedList<String> jointActions = new LinkedList<String>();
 		boolean readyToleave = false ;
 		int readyincounter = 0;
@@ -259,10 +330,7 @@ public class SearchClient {
 			planssteps[i] =  0 ;
 		}
 		
-	  
-		
-		
-		while(arepAllPlanCounterEntriesnull()==false){
+		while(areAllPlanCounterEntriesNull()==false){
 			
 			String jointAction = "[";
 			
@@ -280,42 +348,31 @@ public class SearchClient {
 		    		int newagentcol = agentPlans.get(agent).get(planssteps[agent]).agents[agent][1]; // agent col
 		    		String newagentpos = newagentrow+"-"+newagentcol ;
 		    
-		    	if(sharecsdelay>5){
+		    	if(sharecsdelay > 5) {
 		    		jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();			
 	    		    planssteps[agent]++;
 	    		    plancounter[agent]--;
-		    	}
-		    		
-	    			
-		    	else if(criticalcells.getLast().equals(newagentpos) &&  usingcs==agent ){
+		    	} else if (criticalcells.getLast().equals(newagentpos) && usingcs==agent ) {
 	    			
 	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();			
 	    		    planssteps[agent]++;
 	    		    plancounter[agent]--;
 	    		    readyToleave = true ;
 	    			//System.err.print(" agent "+agent+" leaves critical section");
-	    		}
-	    		else if(criticalcells.getFirst().equals(newagentpos) && usingcs==-1){
+	    		} else if (criticalcells.getFirst().equals(newagentpos) && usingcs==-1) {
 	    			usingcs = agent ;
 	    			//System.err.print(" agent "+agent+" is in the critical section");
 	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
 	    			 planssteps[agent]++;
 	    			 plancounter[agent]--;
 	    			
-	    		}
-	    		
-	    		else if(usingcs==agent){
+	    		} else if (usingcs==agent) {
 	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
 	    			 planssteps[agent]++;
 		    		 plancounter[agent]--;
-	    		}
-	    		
-	    		else if(usingcs!=-1 && usingcs!=agent){
+	    		} else if (usingcs!=-1 && usingcs!=agent) {
 	    			jointAction += "NoOp";
-	    			
-	    		}
-	    		
-	    		else {
+	    		} else {
 	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
 	    			 planssteps[agent]++;
 		    		 plancounter[agent]--;
@@ -364,15 +421,63 @@ public class SearchClient {
 	    	//
 	    }
 	    
-		
+	    return jointActions;
+	}
 	
-	   
-	    
+	/**
+	 * All goals will be assigned some distinct box and no two goals will be assigned the same box.
+	 */
+	private void createGoalBoxRelationship() {
+		// For now, the boxes are randomly distributed to goals
+		for (Goal goal : discoveredGoals) {
+			for (Box box : discoveredBoxes) {
+				if (box.goal == null && box.letter == goal.letter) {
+					box.goal = goal;
+					break;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Assignes all boxes that have been assigned to goals to some agent.
+	 */
+	private void createBoxAgentRelationship() {
+		// For now, assignes a box to the first available agent with matching color
+		for (Box box : discoveredBoxes) {
+			for (Agent agent : discoveredAgents) {
+				if (box.goal != null && box.color == agent.color) {
+					agent.boxes.add(box);
+					break;
+				}
+			}
+		}
+	}
+
+	public LinkedList<String> search(StrategyType strategyType, SearchClient client) throws IOException {
+		System.err.format("Search starting with strategy %s.\n", strategyType);
+		
+		createGoalBoxRelationship();
+		createBoxAgentRelationship();
+		
+		HashMap<Integer, LinkedList<Node>> agentPlans = discoverAgentPlans(strategyType, client);
+
+		System.err.println("Planning finished for all agents.");
+		
+		System.err.println(agentPlans.get(0));
+		
+		for (Node n : agentPlans.get(0)) {
+			String act = n.action.toString();
+
+			System.out.println("[" + act + "]");
+		}
+		
+		LinkedList<String> jointActions = resolveConflicts(agentPlans);
+
 		return jointActions;
 	}
 	
-	
-	public boolean arepAllPlanCounterEntriesnull(){
+	public boolean areAllPlanCounterEntriesNull(){
 		
 		for(int i=0; i<plancounter.length; i++){
 			if(plancounter[i]!=0) return false ;
@@ -382,7 +487,7 @@ public class SearchClient {
 	}
 	
 	public Strategy createStrategy(StrategyType searchType, SearchClient client) {
-		switch(searchType) {	//bfs, dfs, astar, wastar, greedy
+		switch(searchType) {
 			case bfs:
 				return new StrategyBFS();
 			case dfs:
@@ -398,12 +503,18 @@ public class SearchClient {
 		}
 	}
 	
+	/**
+	 * Finds a solution for agent if one such exists and the search strategy algorithm is able to discover it. 
+	 * @param strategy Type of strategy that is used (e.g. astar, bfs, etc.).
+	 * @param agentNo ID of the agent.
+	 * @return Plan for the agent or null if no solution found.
+	 */
 	public LinkedList<Node> searchForAgent(Strategy strategy, int agentNo) {
 		int iterations = 0;	
 		
 		while (true) {
             if (iterations == 1000) {
-				//System.err.println(strategy.searchStatus());
+				System.err.println(strategy.searchStatus());
 				iterations = 0;
 			}
 
@@ -413,63 +524,26 @@ public class SearchClient {
 
 			Node leafNode = strategy.getAndRemoveLeaf();
 			
-			//System.err.println("aegent "+agentNo+" "+leafNode.colorAssignments.get((char) ('0' + agentNo)));
-           
-			int agentrow = leafNode.agents[agentNo][0];
-            int agentcol = leafNode.agents[agentNo][1];
-			     
-           // System.err.println("cord row:"+agentrow+"col:"+agentcol+" "+leafNode.boxes[agentrow][agentcol]);
-           
 			if (leafNode.isGoalState(agentNo)) {
-				System.err.println("FOUND!!!");
 				return leafNode.extractPlan();
 			}
 
 			strategy.addToExplored(leafNode);
 			
-			////System.err.println(leafNode.actions[0].toString() + "," + leafNode.actions[1].toString());
-			
-			
-			
-			
 			for (Node n : leafNode.getExpandedNodes(agentNo)) { // The list of expanded nodes is shuffled randomly; see Node.java.
-				
-				////System.err.println(!strategy.isExplored(n) + "," + !strategy.inFrontier(n));
 				if (!strategy.isExplored(n) && !strategy.inFrontier(n)) {
-					////System.err.println(n.agents[0][0] + "," + n.agents[0][1]);
 					strategy.addToFrontier(n);
-					try{
-						//System.err.println("Added n with: " + n.action.toString());
-						//System.err.println(n.isGoalState(agentNo));
-					}
-					catch(NullPointerException e){
-						 //System.err.print("NoOp"); 
-					}
-					
-//					if(n.isGoalState(agentNo)){
-//						//System.err.println("BREAK!");
-//						break;
-//					}
-					/*try{
-						//System.err.println(n.action.toString());
-					}
-					 catch(NullPointerException e){
-						 //System.err.println("NoOp"); 
-					}*/
 				}
 			}
 			iterations++;
 		}
-		
-		
-		
 	}
 
 	public static void main(String[] args) throws Exception {
 		BufferedReader serverMessages = new BufferedReader(new InputStreamReader(System.in));
 
 		// Use stderr to print to console
-		//System.err.println("SearchClient initializing. I am sending this using the error output stream.");
+		System.err.println("SearchClient initializing. I am sending this using the error output stream.");
 
 		// Read level and create the initial state of the problem
 		SearchClient client = new SearchClient(serverMessages);
@@ -489,7 +563,6 @@ public class SearchClient {
                 	strategyType = strategyType.astar;
                     break;
                 case "-wastar":
-                    // You're welcome to test WA* out with different values, but for the report you must at least indicate benchmarks for W = 5.
                 	strategyType = strategyType.wastar;
                     break;
                 case "-greedy":
@@ -497,24 +570,23 @@ public class SearchClient {
                     break;
                 default:
                 	strategyType = strategyType.bfs;
-                    //System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
+                    System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
             }
         } else {
         	strategyType = strategyType.bfs;
-            //System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
+            System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
         }
         
 		LinkedList<String> solution;
 		try {
-			solution = client.Search(strategyType, client);
+			solution = client.search(strategyType, client);
 		} catch (OutOfMemoryError ex) {
-			//System.err.println("Maximum memory usage exceeded.");
+			System.err.println("Maximum memory usage exceeded.");
 			solution = null;
 		}
 
 		if (solution == null) {
-			////System.err.println(strategy.searchStatus());
-			//System.err.println("Unable to solve level.");
+			System.err.println("Unable to solve level.");
 			System.exit(0);
 		} else {
 			////System.err.println("\nSummary for " + strategy.toString());
@@ -550,7 +622,6 @@ public class SearchClient {
 			RoomDetector rd = new RoomDetector();
 			int[][] roomRegions = rd.detectRooms(client.initialState.walls, client.initialState.rows, client.initialState.cols,
 						   						 client.initialState.agents[0][0], client.initialState.agents[0][1]);
-			
 			
 			for(int i = 0; i < client.initialState.rows; i++){
 				for(int j = 0; j < client.initialState.cols; j++){
