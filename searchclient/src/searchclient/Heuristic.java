@@ -141,6 +141,7 @@ public abstract class Heuristic implements Comparator<Node> {
 							System.err.println("removed2");
 							System.err.println(n.unsatisfiedGoalCount());
 							System.err.println(n.agentsActions);
+							n.strategy.refresh(n);
 							return 0;
 						}
 							

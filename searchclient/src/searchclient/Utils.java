@@ -73,6 +73,20 @@ public class Utils {
 		
 		return null;
 	}
+	
+	/**
+	 * Finds a goal with given ID in given set of goals.
+	 * @param goals
+	 * @param id
+	 * @return
+	 */
+	public static Goal findGoal(Set<Goal> goals, int id) {
+		for (Goal g : goals)
+			if (g.id == id)
+				return g;
+		
+		return null;
+	}
 
 	/**
 	 * Whether a cell at given position is free (i.e. no agent, box or wall is in that place).

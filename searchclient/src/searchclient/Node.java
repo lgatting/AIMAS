@@ -152,7 +152,7 @@ public class Node {
 		
 		assignCommands(expandedNodes, agentNo);
 		
-		//Collections.shuffle(expandedNodes, RND);
+		Collections.shuffle(expandedNodes, RND);
 		return expandedNodes;
 	}
 	

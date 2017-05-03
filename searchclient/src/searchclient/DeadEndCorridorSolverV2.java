@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.omg.CORBA.CODESET_INCOMPATIBLE;
+
 import searchclient.Command.Dir;
 
 import models.Goal;
@@ -33,8 +35,6 @@ public class DeadEndCorridorSolverV2 {
 		solve();
 		
 		Collections.sort(numberedGoals);
-		
-		System.err.println(numberedGoals);
 		
 		return numberedGoals;
 	}
@@ -96,23 +96,28 @@ public class DeadEndCorridorSolverV2 {
 			}
 		}
 		
-		i = 0;
-		j = 0;
+		Collections.reverse(numberedGoals);
 		
-		for (Goal g : goals) {
-			for (i = 0; i < dependancyMatrix[g.id - 1].length; i++) {
+		for (i = 0; i < dependancyMatrix.length; i++) {
+			calculateNumberOfDependencies(Utils.findGoal(goals, i + 1));
+		}
+	}
+	
+	private int calculateNumberOfDependencies(Goal g) {
+		if (g == null)
+			return 0;
+		
+		for (int i = 0; i < dependancyMatrix[g.id - 1].length; i++) {
+			if (dependancyMatrix[g.id - 1][i] == 1) {
+				g.numberOfDependencies++;
 				
+				Goal dependant = Utils.findGoal(goals, i + 1);
+
+				g.numberOfDependencies += dependant.numberOfDependencies;
 			}
 		}
 		
-		for (Goal g : numberedGoals) {
-			for (j = 0; j < numberedGoals.size(); j++) {
-				if (dependancyMatrix[i][j] == 1)
-					g.numberOfDependencies++;
-			}
-			
-			i++;
-		}
+		return g.numberOfDependencies;
 	}
 	
 	private void findDependencies(int[] i, Dir d, Goal previousGoal) {
