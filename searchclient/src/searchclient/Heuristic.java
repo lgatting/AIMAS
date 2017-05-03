@@ -13,6 +13,7 @@ import java.util.Map;
 
 import models.*;
 
+import searchclient.Command.Type;
 import searchclient.NotImplementedException;
 
 public abstract class Heuristic implements Comparator<Node> {
@@ -48,21 +49,9 @@ public abstract class Heuristic implements Comparator<Node> {
 		return -1;
 	}
 
-	/**
-	 * Whether the first position (x1, y1) is a direct neighbor to x2, y2.
-	 * @param x1
-	 * @param y1
-	 * @param x2
-	 * @param y2
-	 * @return True if it is, false otherwise.
-	 */
-	private boolean isNeighboringPosition(int x1, int y1, int x2, int y2) {
-		return Math.abs(x1 - x2) + Math.abs(y1 - y2) == 1;
-	}
-
 	public int h(Node n) {
 		// Since we cannot use decimal numbers for the comparator, we'll multiply the result to account for the small differences
-		int precision = 1000;
+		int precision = 100;
 		
 		if (n.agentsActions.size() == 0) {
 			// No other HLAs; heuristic function cannot help 
@@ -91,13 +80,14 @@ public abstract class Heuristic implements Comparator<Node> {
 					// Sufficient to check just row/col since once either of them has been set to something else, then
 					// the other value must've been set as well
 					if (boxRow != -1) {
-						if (isNeighboringPosition(agentRow, agentCol, boxRow, boxCol)) {
+						if (Utils.isNeighboringPosition(agentRow, agentCol, boxRow, boxCol)) {
 							// This action has been satisfied, move to next HLA
 							n.pastActions.add(n.agentsActions.remove(0));
 							System.err.println("removed1");
+							System.err.println(n.unsatisfiedGoalCount());
 							System.err.println(n.agentsActions);
-							n.strategy.refreshFrontier();
-							return h(n);
+							n.strategy.refresh(n);
+							return 0;
 						} 
 							
 						// We now have found both the agent and the box; 
@@ -110,6 +100,7 @@ public abstract class Heuristic implements Comparator<Node> {
 						
 						int cost = (int)Math.round(dist * precision);
 						
+						cost += n.unsatisfiedGoalCount() * precision * 1000;
 						
 						return cost;
 					}
@@ -148,9 +139,9 @@ public abstract class Heuristic implements Comparator<Node> {
 							// This action has been satisfied, move to next HLA
 							n.pastActions.add(n.agentsActions.remove(0));
 							System.err.println("removed2");
+							System.err.println(n.unsatisfiedGoalCount());
 							System.err.println(n.agentsActions);
-							n.strategy.refreshFrontier();
-							return h(n);
+							return 0;
 						}
 							
 						// We now have found both the agent and the box; 
@@ -166,9 +157,14 @@ public abstract class Heuristic implements Comparator<Node> {
 						
 						double distAB = Math.sqrt(w*w + h*h);
 						
-						double dist = distBG;
+						// The agent should stay as close to his box as possible at all times
+						distAB = distAB * 100;
+						
+						double dist = distBG + distAB;
 						
 						int cost = (int)Math.round(dist * precision);
+						
+						cost += n.unsatisfiedGoalCount() * precision * 1000;
 						
 						return cost;
 					}

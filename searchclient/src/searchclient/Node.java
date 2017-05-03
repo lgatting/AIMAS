@@ -116,8 +116,12 @@ public class Node {
 	public boolean isInitialState() {
 		return this.parent == null;
 	}
-
-	public boolean isGoalState(int agentNo) {
+	
+	public boolean isGoalState() {
+		return unsatisfiedGoalCount() == 0;
+	}
+	
+	public int unsatisfiedGoalCount() {
 		int goalCount = 0;
 		int satisfiedGoals = 0;
 		for (int row = 1; row < this.rows - 1; row++) {
@@ -132,7 +136,8 @@ public class Node {
 				}
 			}
 		}
-		return goalCount == satisfiedGoals;
+		
+		return goalCount - satisfiedGoals;
 	}
 	
 
@@ -180,8 +185,6 @@ public class Node {
 				// Make sure that there's actually a box to move
 				if (this.boxAt(newAgentRow, newAgentCol) && sameColorAsAgent(agentNo, this.boxes[newAgentRow][newAgentCol])) {
 
-					////System.err.println("Trying PUSH");
-					//System.err.println("Box: " + this.boxes[newAgentRow][newAgentCol] + " " + colorAssignments.get((char) (agentNo + '0')) + " " + colorAssignments.get(this.boxes[newAgentRow][newAgentCol]));
 					int newBoxRow = newAgentRow + Command.dirToRowChange(c.dir2);
 					int newBoxCol = newAgentCol + Command.dirToColChange(c.dir2);
 					// .. and that new cell of box is free
@@ -203,7 +206,7 @@ public class Node {
 					int boxRow = this.agents[agentNo][0] + Command.dirToRowChange(c.dir2);
 					int boxCol = this.agents[agentNo][1] + Command.dirToColChange(c.dir2);
 					// .. and there's a box in "dir2" of the agent
-					if (this.boxAt(boxRow, boxCol) && sameColorAsAgent(agentNo, this.boxes[newAgentRow][newAgentCol])) {
+					if (this.boxAt(boxRow, boxCol) && sameColorAsAgent(agentNo, this.boxes[boxRow][boxCol])) {
 						n.action = c;
 						n.agents[agentNo][0] = newAgentRow;
 						n.agents[agentNo][1] = newAgentCol;
@@ -230,6 +233,14 @@ public class Node {
 				return true;
 			}
 		}
+		return false;
+	}
+	
+	public boolean agentAt(int row, int col) {
+		for (int agent = 0; agent < this.agentCount; agent++)
+			if(this.agents[agent][0] == row && this.agents[agent][1] == col)
+				return true;
+				
 		return false;
 	}
 

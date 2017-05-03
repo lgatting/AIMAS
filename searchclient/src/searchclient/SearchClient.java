@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -187,7 +188,30 @@ public class SearchClient {
 	 */
 	private List<HighLevelAction> generateHLAPlan(Agent agent) {
 		List<HighLevelAction> plan = new ArrayList<HighLevelAction>();
+		// Uncomment this section to play around with the corridor solver and comment out the for-loop that follows this comment
+		/*
+		DeadEndCorridorSolverV2 decsv2 = new DeadEndCorridorSolverV2(discoveredGoals, initialState);
+		List<Goal> orderedGoals = decsv2.orderGoals();
 		
+		System.err.println(orderedGoals);
+		
+		decsv2.printDependancyMatrix();
+		
+		List<Box> orderedBoxes = new ArrayList<Box>();
+		
+		for (Box box : agent.boxes) {
+			orderedBoxes.add(box);
+		}
+		
+		Collections.sort(orderedBoxes);
+		
+		
+		for (Box box : orderedBoxes) {
+			plan.add(new GoToHLA(box));
+			plan.add(new SatisfyGoalHLA(box, box.goal));
+		}
+		*/
+
 		for (Box box : agent.boxes) {
 			plan.add(new GoToHLA(box));
 			plan.add(new SatisfyGoalHLA(box, box.goal));
@@ -428,7 +452,6 @@ public class SearchClient {
 	 * All goals will be assigned some distinct box and no two goals will be assigned the same box.
 	 */
 	private void createGoalBoxRelationship() {
-		// For now, the boxes are randomly distributed to goals
 		for (Goal goal : discoveredGoals) {
 			for (Box box : discoveredBoxes) {
 				if (box.goal == null && box.letter == goal.letter) {
@@ -464,17 +487,20 @@ public class SearchClient {
 
 		System.err.println("Planning finished for all agents.");
 		
-		System.err.println(agentPlans.get(0));
+		// Sending actions to server only for SA
 		
+		LinkedList<String> solution = new LinkedList<String>();
 		for (Node n : agentPlans.get(0)) {
 			String act = n.action.toString();
 
-			System.out.println("[" + act + "]");
+			solution.add("[" + act + "]");
 		}
 		
-		LinkedList<String> jointActions = resolveConflicts(agentPlans);
-
-		return jointActions;
+		return solution;
+		
+		// Sending joint actions to server for both SA and MA levels
+		//LinkedList<String> jointActions = resolveConflicts(agentPlans);
+		//return jointActions;
 	}
 	
 	public boolean areAllPlanCounterEntriesNull(){
@@ -524,7 +550,7 @@ public class SearchClient {
 
 			Node leafNode = strategy.getAndRemoveLeaf();
 			
-			if (leafNode.isGoalState(agentNo)) {
+			if (leafNode.isGoalState()) {
 				return leafNode.extractPlan();
 			}
 
@@ -550,30 +576,29 @@ public class SearchClient {
 
 		StrategyType strategyType = null;
 		
-        Strategy strategy;
         if (args.length > 0) {
             switch (args[0].toLowerCase()) {
                 case "-bfs":
-                	strategyType = strategyType.bfs;
+                	strategyType = StrategyType.bfs;
                     break;
                 case "-dfs":
-                	strategyType = strategyType.dfs;
+                	strategyType = StrategyType.dfs;
                     break;
                 case "-astar":
-                	strategyType = strategyType.astar;
+                	strategyType = StrategyType.astar;
                     break;
                 case "-wastar":
-                	strategyType = strategyType.wastar;
+                	strategyType = StrategyType.wastar;
                     break;
                 case "-greedy":
-                	strategyType = strategyType.greedy;
+                	strategyType = StrategyType.greedy;
                     break;
                 default:
-                	strategyType = strategyType.bfs;
+                	strategyType = StrategyType.bfs;
                     System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
             }
         } else {
-        	strategyType = strategyType.bfs;
+        	strategyType = StrategyType.bfs;
             System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
         }
         
@@ -589,36 +614,17 @@ public class SearchClient {
 			System.err.println("Unable to solve level.");
 			System.exit(0);
 		} else {
-			////System.err.println("\nSummary for " + strategy.toString());
-			//System.err.println("Found solution of length " + solution.size());
-			////System.err.println(strategy.searchStatus());
-
-			for (String s : solution) {	// Create separate object?
-//				String act = "[";
-//				try{
-//					act += n.action.toString();
-//				}
-//				 catch(NullPointerException e){
-//					act += "NoOp"; 
-//				 }
-//				for(int i = 1; i < n.agentCount; i++){
-//					try{
-//						act += "," + n.action.toString();
-//					}
-//					 catch(NullPointerException e){
-//						act += ",NoOp"; 
-//					 }
-//				}
-//				act += "]";
-				System.err.println(s);
+			System.err.println("A solution has been found.");
+			
+			for (String s : solution) {
 				System.out.println(s);
 				String response = serverMessages.readLine();
 				if (response.contains("false")) {
-					//System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
-					////System.err.format("%s was attempted in \n%s\n", s, n.toString());
+					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
 					break;
 				}
 			}
+
 			RoomDetector rd = new RoomDetector();
 			int[][] roomRegions = rd.detectRooms(client.initialState.walls, client.initialState.rows, client.initialState.cols,
 						   						 client.initialState.agents[0][0], client.initialState.agents[0][1]);

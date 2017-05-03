@@ -51,7 +51,11 @@ public abstract class Strategy extends Thread {
 
 	public abstract boolean frontierIsEmpty();
 	
-	public abstract void refreshFrontier();
+	/**
+	 * REsets the frontier and explored nodes set.
+	 * @param n Node at which a HLA was satisfied.
+	 */
+	public abstract void refresh(Node n);
 
 	@Override
 	public abstract String toString();
@@ -95,7 +99,7 @@ public abstract class Strategy extends Thread {
 		}
 		
 		@Override
-		public void refreshFrontier() { }
+		public void refresh(Node n) { }
 
 		@Override
 		public String toString() {
@@ -142,7 +146,7 @@ public abstract class Strategy extends Thread {
         }
 		
 		@Override
-		public void refreshFrontier() { }
+		public void refresh(Node n) { }
 		
 		@Override
         public String toString() {
@@ -197,13 +201,12 @@ public abstract class Strategy extends Thread {
 		}
 		
 		@Override
-		public void refreshFrontier() {
-			//Node n = frontier.poll();
+		public void refresh(Node n) {
+			frontier = new PriorityQueue<Node>(heuristic);
+			frontierSet = new HashSet<Node>();
+			super.explored = new HashSet<Node>();
 			
-			//frontier = new PriorityQueue<Node>(heuristic);
-            //frontierSet = new HashSet<Node>();
-            
-            //addToFrontier(n);
+			addToFrontier(n);
 		}
 
 		@Override

@@ -1,6 +1,6 @@
 package models;
 
-public class Goal {
+public class Goal implements Comparable<Goal> {
 	/**
 	 * ID of this goal.
 	 */
@@ -8,8 +8,21 @@ public class Goal {
 	
 	public char letter;
 	
+	public int numberOfDependencies;
+	
 	public Goal(int id, char letter) {
-		this.letter = letter;
 		this.id = id;
+		this.letter = letter;
+		this.numberOfDependencies = 0;
+	}
+	
+	@Override
+	public int compareTo(Goal g) {
+		return g.numberOfDependencies - numberOfDependencies;
+	}
+	
+	@Override
+	public String toString() {
+		return "Goal " + letter + " (" + id + "), " + numberOfDependencies; 
 	}
 }
