@@ -169,15 +169,9 @@ public class Node {
 			if (c.actionType == Type.Move) {
 				// Check if there's a wall or box on the cell to which the agent is moving
 				if (this.cellIsFree(agentNo, newAgentRow, newAgentCol)) {
-					//Node n = parent.ChildNode();
 					n.action = c;
-					//n.assignCommands(expandedNodes, agentNo+1);
-					
-					// The action is only applied if the other agents' moves are deemed applicable. THIS NEEDS TO BE FIXED as other agents may also not move
-					
 					n.agents[agentNo][0] = newAgentRow;
 					n.agents[agentNo][1] = newAgentCol;
-					
 					expandedNodes.add(n);
 				}
 			} else if (c.actionType == Type.Push) {
@@ -187,6 +181,7 @@ public class Node {
 
 					int newBoxRow = newAgentRow + Command.dirToRowChange(c.dir2);
 					int newBoxCol = newAgentCol + Command.dirToColChange(c.dir2);
+					
 					// .. and that new cell of box is free
 					if (this.cellIsFree(agentNo, newBoxRow, newBoxCol)) {
 						n.action = c;
@@ -223,17 +218,7 @@ public class Node {
 	}
 
 	private boolean cellIsFree(int agentNo, int row, int col) {
-		return !this.walls[row][col] && this.boxes[row][col] == 0 && !agentAt(agentNo,row,col) ;
-	}
-	
-	// agentNo is the agent that would like to check whether there is another agent blocking
-	private boolean agentAt(int agentNo, int row, int col) {
-		for(int agent = 0; agent < this.agentCount; agent++){
-			if(this.agents[agent][0] == row && this.agents[agent][1] == col && agent != agentNo) {
-				return true;
-			}
-		}
-		return false;
+		return !this.walls[row][col] && this.boxes[row][col] == 0 && !agentAt(row, col) ;
 	}
 	
 	public boolean agentAt(int row, int col) {

@@ -206,7 +206,7 @@ public abstract class Strategy extends Thread {
 			frontierSet = new HashSet<Node>();
 			super.explored = new HashSet<Node>();
 			
-			addToFrontier(n);
+			//addToFrontier(n);
 		}
 
 		@Override

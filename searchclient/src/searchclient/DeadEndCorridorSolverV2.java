@@ -73,6 +73,7 @@ public class DeadEndCorridorSolverV2 {
 		
 		for (int k = 0; k < frontier.size(); ) {
 			Goal g = frontier.get(k);
+			System.err.println(frontier.size());
 			
 			int[] goalPos = goalPositions.get(g.id);
 			
@@ -88,11 +89,15 @@ public class DeadEndCorridorSolverV2 {
 					deadend2 = explore(goalPos, freeNeighborsDir(goalPos).get(1));
 				
 				if ((deadend1 == null && deadend2 == null) || (deadend1 != null && deadend2 != null))
-					continue;
+					// This goal is in a corridor that is open from both ends
+					frontier.remove(g);
 				if (deadend1 != null)
 					findDependencies(deadend1, freeNeighborsDir(deadend1).get(0), null);
 				if (deadend2 != null)
 					findDependencies(deadend2, freeNeighborsDir(deadend2).get(0), null);
+			} else {
+				// This goal is not in a corridor
+				frontier.remove(g);
 			}
 		}
 		
@@ -202,7 +207,9 @@ public class DeadEndCorridorSolverV2 {
 		for (Dir d : possibleDirs) {
 			int[] neighbor = neighborOf(i, d);
 			
-			if (Utils.cellIsFree(node, neighbor[0], neighbor[1])) {
+			// Checking if the cell is free; we don't consider boxes and agents since those can be moved away and are not
+			// static obstacles like walls
+			if (!node.walls[neighbor[0]][neighbor[1]]) {
 				return d;
 			}
 		}

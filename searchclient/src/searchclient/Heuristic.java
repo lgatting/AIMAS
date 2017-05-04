@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import models.*;
@@ -87,6 +88,12 @@ public abstract class Heuristic implements Comparator<Node> {
 							System.err.println(n.unsatisfiedGoalCount());
 							System.err.println(n.agentsActions);
 							n.strategy.refresh(n);
+							
+							List<Node> nodes = n.getExpandedNodes(0);
+
+							for (Node newNode : nodes)
+								n.strategy.addToFrontier(newNode);
+							
 							return 0;
 						} 
 							
@@ -100,7 +107,10 @@ public abstract class Heuristic implements Comparator<Node> {
 						
 						int cost = (int)Math.round(dist * precision);
 						
-						cost += n.unsatisfiedGoalCount() * precision * 1000;
+						cost += n.unsatisfiedGoalCount() * precision * 999999;
+						
+						if (n.action.actionType != Type.Move)
+							cost = Integer.MAX_VALUE;
 						
 						return cost;
 					}
@@ -142,6 +152,12 @@ public abstract class Heuristic implements Comparator<Node> {
 							System.err.println(n.unsatisfiedGoalCount());
 							System.err.println(n.agentsActions);
 							n.strategy.refresh(n);
+							
+							List<Node> nodes = n.getExpandedNodes(0);
+
+							for (Node newNode : nodes)
+								n.strategy.addToFrontier(newNode);
+							
 							return 0;
 						}
 							
@@ -159,13 +175,18 @@ public abstract class Heuristic implements Comparator<Node> {
 						double distAB = Math.sqrt(w*w + h*h);
 						
 						// The agent should stay as close to his box as possible at all times
-						distAB = distAB * 100;
+						distAB = distAB * 20;
 						
 						double dist = distBG + distAB;
 						
 						int cost = (int)Math.round(dist * precision);
 						
 						cost += n.unsatisfiedGoalCount() * precision * 1000;
+						
+						// Prefer pushing to pulling mainly because of the corridors since we don't want to end up
+						// locked up in there
+						if (n.action.actionType == Type.Pull)
+							cost += 3 * precision;
 						
 						return cost;
 					}
