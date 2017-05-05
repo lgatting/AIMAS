@@ -1,4 +1,4 @@
-package searchclient;
+package solvers;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,6 +10,9 @@ import java.util.Set;
 
 import org.omg.CORBA.CODESET_INCOMPATIBLE;
 
+import searchclient.Command;
+import searchclient.Node;
+import searchclient.Utils;
 import searchclient.Command.Dir;
 
 import models.Goal;
@@ -73,7 +76,6 @@ public class DeadEndCorridorSolverV2 {
 		
 		for (int k = 0; k < frontier.size(); ) {
 			Goal g = frontier.get(k);
-			System.err.println(frontier.size());
 			
 			int[] goalPos = goalPositions.get(g.id);
 			
@@ -129,7 +131,7 @@ public class DeadEndCorridorSolverV2 {
 		int wallCount = Utils.neighbouringWallsCount(i[0], i[1], node.walls);
 		
 		if (wallCount == 2 || wallCount == 3) {
-			int[] neighbor = neighborOf(i, d);
+			int[] neighbor = Utils.neighborOf(i, d);
 			
 			Goal goalAtI = Utils.findGoal(goals, node.goalIds, i);
 			
@@ -149,10 +151,10 @@ public class DeadEndCorridorSolverV2 {
 	private List<Dir> freeNeighborsDir(int[] i) {
 		List<Dir> freeNeighbors = new ArrayList<Dir>();
 
-		int[] nNeighbor = neighborOf(i, Dir.N);
-		int[] sNeighbor = neighborOf(i, Dir.S);
-		int[] eNeighbor = neighborOf(i, Dir.E);
-		int[] wNeighbor = neighborOf(i, Dir.W);
+		int[] nNeighbor = Utils.neighborOf(i, Dir.N);
+		int[] sNeighbor = Utils.neighborOf(i, Dir.S);
+		int[] eNeighbor = Utils.neighborOf(i, Dir.E);
+		int[] wNeighbor = Utils.neighborOf(i, Dir.W);
 
 		if (!node.walls[nNeighbor[0]][nNeighbor[1]])
 			freeNeighbors.add(Dir.N);
@@ -167,7 +169,7 @@ public class DeadEndCorridorSolverV2 {
 	}
 	
 	private int[] explore(int[] i, Dir d) {
-		int[] neighbor = neighborOf(i, d);
+		int[] neighbor = Utils.neighborOf(i, d);
 		
 		int wallCount = Utils.neighbouringWallsCount(neighbor[0], neighbor[1], node.walls);
 		
@@ -181,19 +183,6 @@ public class DeadEndCorridorSolverV2 {
 			return null;
 	}
 	
-	private int[] neighborOf(int[] i, Dir d) {
-		if (d == Dir.E)
-			return new int[] { i[0] + 1, i[1] };
-		if (d == Dir.S)
-			return new int[] { i[0], i[1] + 1 };
-		if (d == Dir.W)
-			return new int[] { i[0] - 1, i[1] };
-		if (d == Dir.N)
-			return new int[] { i[0], i[1] - 1 };
-		
-		return null;
-	}
-	
 	private Dir goodDir(int[] i, Dir previousDir) {
 		Set<Dir> possibleDirs = new HashSet<Dir>();
 
@@ -205,7 +194,7 @@ public class DeadEndCorridorSolverV2 {
 		possibleDirs.remove(oppositeDir(previousDir));
 		
 		for (Dir d : possibleDirs) {
-			int[] neighbor = neighborOf(i, d);
+			int[] neighbor = Utils.neighborOf(i, d);
 			
 			// Checking if the cell is free; we don't consider boxes and agents since those can be moved away and are not
 			// static obstacles like walls

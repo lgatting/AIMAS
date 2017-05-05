@@ -2,6 +2,9 @@ package searchclient;
 
 import java.util.Set;
 
+import searchclient.Command.Dir;
+
+import models.Box;
 import models.Goal;
 
 public class Utils {
@@ -15,6 +18,25 @@ public class Utils {
 	 */
 	public static boolean isNeighboringPosition(int x1, int y1, int x2, int y2) {
 		return Math.abs(x1 - x2) + Math.abs(y1 - y2) == 1;
+	}
+	
+	/**
+	 * Returns a neighboring position to the given position in given direction.
+	 * @param i
+	 * @param d
+	 * @return
+	 */
+	public static int[] neighborOf(int[] i, Dir d) {
+		if (d == Dir.E)
+			return new int[] { i[0] + 1, i[1] };
+		if (d == Dir.S)
+			return new int[] { i[0], i[1] + 1 };
+		if (d == Dir.W)
+			return new int[] { i[0] - 1, i[1] };
+		if (d == Dir.N)
+			return new int[] { i[0], i[1] - 1 };
+		
+		return null;
 	}
 	
 	/**
@@ -38,6 +60,25 @@ public class Utils {
 			count++;
 			
 		return count;
+	}
+	
+	/**
+	 * Finds the position of the box in the given map.
+	 * @param box
+	 * @param boxIdsIds
+	 * @return Integer array with 2 elements, first being row, second column of the goal.
+	 */
+	public static int[] findBoxPosition(Box box, int[][] boxIds) {
+		int rows = boxIds.length;
+		for (int i = 0; i < rows; i++) {
+			int cols = boxIds[i].length;
+			for (int j = 0; j < cols; j++) {
+				if (box.id == boxIds[i][j])
+					return new int[] { i, j };
+			}
+		}
+		
+		return null;
 	}
 	
 	/**

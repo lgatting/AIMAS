@@ -26,6 +26,9 @@ import searchclient.Memory;
 import searchclient.Strategy.*;
 import searchclient.Heuristic.*;
 import searchclient.ElementWithColor.*;
+import solvers.DeadEndCorridorSolverV2;
+import solvers.Lewis;
+import solvers.PositionPenalizer;
 
 
 
@@ -189,22 +192,29 @@ public class SearchClient {
 	private List<HighLevelAction> generateHLAPlan(Agent agent) {
 		List<HighLevelAction> plan = new ArrayList<HighLevelAction>();
 		// Uncomment this section to play around with the corridor solver and comment out the for-loop that follows this comment
-		DeadEndCorridorSolverV2 decsv2 = new DeadEndCorridorSolverV2(discoveredGoals, initialState);
-		List<Goal> orderedGoals = decsv2.orderGoals();
-		
-		System.err.println("Discovered order of goals using corridor solver: " + orderedGoals);
-		
-		decsv2.printDependancyMatrix();
-		
 		List<Box> orderedBoxes = new ArrayList<Box>();
 		
 		for (Box box : agent.boxes) {
 			orderedBoxes.add(box);
 		}
+		
+		DeadEndCorridorSolverV2 decsv2 = new DeadEndCorridorSolverV2(discoveredGoals, initialState);
+		List<Goal> orderedGoals = decsv2.orderGoals();
+		
+		decsv2.printDependancyMatrix();
+
+		Lewis l = new Lewis(discoveredGoals, initialState);
+		l.solve();
+		
+		PositionPenalizer pp = new PositionPenalizer(discoveredGoals, initialState);
+		pp.solve();
+		
+		System.err.println("Discovered order of goals using corridor solver: " + orderedGoals);
+		
+		System.err.println();
 
 		Collections.sort(orderedBoxes);
 		Collections.reverse(orderedBoxes);
-		
 		
 		for (Box box : orderedBoxes) {
 			plan.add(new GoToHLA(box));

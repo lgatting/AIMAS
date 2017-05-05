@@ -1,4 +1,4 @@
-package searchclient;
+package solvers;
 
 import java.util.ArrayList;
 import java.util.HashMap;

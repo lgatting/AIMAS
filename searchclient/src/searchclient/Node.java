@@ -14,7 +14,9 @@ import java.util.Random;
 
 import searchclient.Command.Type;
 import searchclient.ElementWithColor.Color;
+import models.GoToHLA;
 import models.HighLevelAction;
+import models.SatisfyGoalHLA;
 
 public class Node {
 	private static final Random RND = new Random(1);
@@ -303,6 +305,47 @@ public class Node {
 		if (!Arrays.deepEquals(this.walls, other.walls))
 			return false;
 		return true;
+	}
+	
+	/**
+	 * Checks whether some of the HLAs need to be repaired (such as SatisfyGoal HLA if it
+	 * was destroyed on the way).
+	 */
+	public void checkHLAs() {
+		for (HighLevelAction hla : pastActions) {
+			if (hla instanceof SatisfyGoalHLA) {
+				SatisfyGoalHLA act = (SatisfyGoalHLA) hla;
+				
+				int[] goalPos = Utils.findGoalPosition(act.goal, goalIds);
+				int[] boxPos = Utils.findBoxPosition(act.box, boxIds);
+
+				if (goalPos[0] != boxPos[0] || goalPos[1] != boxPos[1]) {
+					System.err.println("Broken HLA detected!");
+					
+					agentsActions.add(new GoToHLA(act.box));
+					agentsActions.add(new SatisfyGoalHLA(act.box, act.goal));
+					
+					// Add just one action and after satisfying we'll see what to do next
+					break;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Counts how many boxes are placed on incorrect goal in this node.
+	 * @return
+	 */
+	public int boxesOnWrongGoalsCount() {
+		int count = 0;
+		for (int i = 0; i < boxes.length; i++) {
+			for (int j = 0; j < boxes[i].length; j++) {
+				if (boxIds[i][j] != 0 && goalIds[i][j] != 0 && boxIds[i][j] != goalIds[i][j]) {
+					count++;
+				}
+			}
+		}
+		return count;
 	}
 
 	@Override

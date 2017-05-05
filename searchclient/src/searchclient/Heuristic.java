@@ -61,6 +61,11 @@ public abstract class Heuristic implements Comparator<Node> {
 		
 		HighLevelAction hla = n.agentsActions.get(0);
 		
+		int pastGoalSatisficationHLAsCount = 0;
+		for (HighLevelAction h : n.agentsActions)
+			if (h instanceof SatisfyGoalHLA)
+				pastGoalSatisficationHLAsCount++;
+		
 		if (hla instanceof GoToHLA) {
 			GoToHLA action = (GoToHLA) hla;
 
@@ -94,6 +99,9 @@ public abstract class Heuristic implements Comparator<Node> {
 							for (Node newNode : nodes)
 								n.strategy.addToFrontier(newNode);
 							
+							if (n.agentsActions.size() == 0)
+								n.checkHLAs();
+							
 							return 0;
 						} 
 							
@@ -107,10 +115,16 @@ public abstract class Heuristic implements Comparator<Node> {
 						
 						int cost = (int)Math.round(dist * precision);
 						
-						cost += n.unsatisfiedGoalCount() * precision * 999999;
+						cost += Math.abs(pastGoalSatisficationHLAsCount - n.unsatisfiedGoalCount()) * precision * 5000; // 999999
 						
 						if (n.action.actionType != Type.Move)
-							cost = Integer.MAX_VALUE;
+							// Previously MAX_VALUE
+							cost += 10 * precision;
+						
+						if (n.action.actionType == Type.Pull)
+							cost += 2 * precision;
+						
+						cost += n.boxesOnWrongGoalsCount() * 1000;
 						
 						return cost;
 					}
@@ -158,6 +172,9 @@ public abstract class Heuristic implements Comparator<Node> {
 							for (Node newNode : nodes)
 								n.strategy.addToFrontier(newNode);
 							
+							if (n.agentsActions.size() == 0)
+								n.checkHLAs();
+							
 							return 0;
 						}
 							
@@ -181,12 +198,14 @@ public abstract class Heuristic implements Comparator<Node> {
 						
 						int cost = (int)Math.round(dist * precision);
 						
-						cost += n.unsatisfiedGoalCount() * precision * 1000;
+						cost += Math.abs(pastGoalSatisficationHLAsCount - n.unsatisfiedGoalCount()) * precision * 1000;
 						
 						// Prefer pushing to pulling mainly because of the corridors since we don't want to end up
 						// locked up in there
 						if (n.action.actionType == Type.Pull)
 							cost += 3 * precision;
+						
+						cost += n.boxesOnWrongGoalsCount() * 1000;
 						
 						return cost;
 					}
