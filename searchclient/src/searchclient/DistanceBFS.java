@@ -8,6 +8,7 @@ import searchclient.ElementWithColor.Color;
 // Used to calculate the closest distance to a box from a goal.
 public class DistanceBFS {
 	boolean[][] walls;
+	int[][] agents;
 	char[][] levelToSearch;
 	char[][] copyOfLevelToSearch;
 	HashMap<Character, Color> colorAssignments;
@@ -19,10 +20,15 @@ public class DistanceBFS {
 	
 	ArrayDeque<int[]> queue = new ArrayDeque<int[]>();
 	
-	public DistanceBFS(boolean[][] walls, char[][] boxes, HashMap<Character, Color> colorAssignments, int rows, int cols){
+	public static enum Direction {
+		left, right, up, down
+	}
+	
+	public DistanceBFS(boolean[][] walls, char[][] boxes, int[][] agents, HashMap<Character, Color> colorAssignments, int rows, int cols){
 		this.walls = walls;
 		this.rows = rows;
 		this.cols = cols;
+		this.agents = agents;
 		this.colorAssignments = colorAssignments;
 		
 		levelToSearch = new char[rows][cols];
@@ -41,57 +47,27 @@ public class DistanceBFS {
 	}
 	
 	public int closestBoxFromGoal(int startRow, int startCol, char goalChar){
-		
-		resetCopyOfLevel();
+		init(startRow, startCol);
 		
 		this.boxChar =  java.lang.Character.toUpperCase(goalChar);
 		
-		copyOfLevelToSearch[startRow][startCol] = '!';	// Mark current cell as searched
-		
-		queue.add(createPosDistArray(startRow, startCol, 0));
-		
-		while(!queue.isEmpty()) {
-			int result = explore();
-			if(result >= 0){
-				queue.clear();
-				return result;
-			}
-		}
-		
-		return -1;
+		return performSearch(null, null, null, 0);
 		
 	}
 	
 	public int closestMovableBoxFromAgent(int startRow, int startCol, int agent){
-		resetCopyOfLevel();
+		init(startRow, startCol);
 		
 		Color agentColor = this.colorAssignments.get((char) (agent  + '0'));
 		
 		System.err.println("" + startRow + "," + startCol + "," +agentColor);
 		
-		copyOfLevelToSearch[startRow][startCol] = '!';	// Mark current cell as searched
-		
-		queue.add(createPosDistArray(startRow, startCol, 0));
-		
-		while(!queue.isEmpty()) {
-			int result = explore2(agentColor);
-			if(result >= 0){
-				queue.clear();
-				return result;
-			}
-		}
-		
-		return -1;
+		return performSearch(agentColor, null, null, 1);
 	}
 	
 	// otherAgentsPlan is a boolean array with the fields that other agents are planning to traverse set to true
-	public int closestSafeCellForBox(boolean[][] otherAgentsPlan, int boxStartRow, int boxStartCol){
-		// If the box is in a non-critical cell
-		if(!otherAgentsPlan[boxStartRow][boxStartCol]){
-			return 0;
-		}
-		
-		resetCopyOfLevel();
+	public int closestSafeCellForBox(boolean[][] otherAgentsPlan, char[][] agents, int boxStartRow, int boxStartCol){		
+		init(boxStartRow, boxStartCol);
 		
 		char boxChar = levelToSearch[boxStartRow][boxStartCol];
 		
@@ -99,12 +75,18 @@ public class DistanceBFS {
 		
 		System.err.println("" + boxStartRow + "," + boxStartCol);
 		
-		copyOfLevelToSearch[boxStartRow][boxStartCol] = '!';	// Mark current cell as searched
-		
-		queue.add(createPosDistArray(boxStartRow, boxStartCol, 0));
-		
+		return performSearch(null, otherAgentsPlan, boxColor, 2);
+	}
+	
+	public void init(int row, int col){
+		resetCopyOfLevel();
+		copyOfLevelToSearch[row][col] = '!';	// Mark current cell as searched
+		queue.add(createPosDistArray(row, col, 0));
+	}
+	
+	public int performSearch(Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode){
 		while(!queue.isEmpty()) {
-			int result = explore3(otherAgentsPlan, boxColor);
+			int result = exploreNew(agentColor, otherAgentsPlan, boxColor, mode);
 			if(result >= 0){
 				queue.clear();
 				return result;
@@ -136,7 +118,7 @@ public class DistanceBFS {
 			return dist;
 		}
 		
-		if(!walls[row-1][col] && copyOfLevelToSearch[row-1][col] != '!') {	// If the neighbouring cell is not a wall
+		/*if(!walls[row-1][col] && copyOfLevelToSearch[row-1][col] != '!') {	// If the neighbouring cell is not a wall
 			queue.add(createPosDistArray(row-1,col, dist+1));
 			copyOfLevelToSearch[row][col] = '!';
 		}
@@ -151,7 +133,7 @@ public class DistanceBFS {
 		if(!walls[row][col+1] && copyOfLevelToSearch[row][col+1] != '!') {
 			queue.add(createPosDistArray(row,col+1, dist+1));
 			copyOfLevelToSearch[row][col] = '!';
-		}
+		}*/
 		
 		return -1;
 	}
@@ -215,6 +197,10 @@ public class DistanceBFS {
 		return -1;
 	}
 	
+	/*
+	 * This method returns the distance the closest free cell from the current position of a box.
+	 * It serves as a heuristic to clear boxes off critical sections.
+	 */
 	public int explore3(boolean[][] otherAgentsPlan, Color boxColor){
 		int[] curPosDist = queue.remove();
 		
@@ -228,19 +214,19 @@ public class DistanceBFS {
 		}
 		
 		// Missing the logic to consider agents and their colors
-		if(!walls[row-1][col] && copyOfLevelToSearch[row-1][col] != '!' && otherAgentsPlan[row-1][col]) {	// If the neighbouring cell is not a wall
+		if(!walls[row-1][col] && copyOfLevelToSearch[row-1][col] != '!' && otherAgentsPlan[row-1][col] && !differentColoredAgentInCell(row-1,col, boxColor)) {	// If the neighbouring cell is not a wall
 			queue.add(createPosDistArray(row-1,col, dist+1));
 			copyOfLevelToSearch[row-1][col] = '!';
 		}
-		if(!walls[row+1][col] && copyOfLevelToSearch[row+1][col] != '!' && otherAgentsPlan[row+1][col]) {
+		if(!walls[row+1][col] && copyOfLevelToSearch[row+1][col] != '!' && otherAgentsPlan[row+1][col] && !differentColoredAgentInCell(row+1,col, boxColor)) {
 			queue.add(createPosDistArray(row+1,col, dist+1));
 			copyOfLevelToSearch[row+1][col] = '!';
 		}
-		if(!walls[row][col-1] && copyOfLevelToSearch[row][col-1] != '!' && otherAgentsPlan[row][col-1]) {
+		if(!walls[row][col-1] && copyOfLevelToSearch[row][col-1] != '!' && otherAgentsPlan[row][col-1] && !differentColoredAgentInCell(row,col-1, boxColor)) {
 			queue.add(createPosDistArray(row,col-1, dist+1));
 			copyOfLevelToSearch[row][col-1] = '!';
 		}
-		if(!walls[row][col+1] && copyOfLevelToSearch[row][col+1] != '!' && otherAgentsPlan[row][col+1]) {
+		if(!walls[row][col+1] && copyOfLevelToSearch[row][col+1] != '!' && otherAgentsPlan[row][col+1] && !differentColoredAgentInCell(row,col+1, boxColor)) {
 			queue.add(createPosDistArray(row,col+1, dist+1));
 			copyOfLevelToSearch[row][col+1] = '!';
 		}
@@ -248,9 +234,103 @@ public class DistanceBFS {
 		return -1;
 	}
 	
-//	public boolean differentInCell(int row, int col) {
-//		colorAssignments.get(key)
-//	}
+	public int exploreNew(Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode) {
+		int[] curPosDist = queue.remove();
+		
+		int row = curPosDist[0];
+		int col = curPosDist[1];
+		int dist = curPosDist[2];
+		
+		switch(mode) {
+			case 0:
+				if(copyOfLevelToSearch[row][col] == this.boxChar){
+					return dist;
+				}
+				break;
+				
+			case 1:
+				if(copyOfLevelToSearch[row][col] != '?' &&
+				   this.colorAssignments.get(copyOfLevelToSearch[row][col]) == agentColor){
+					return dist;
+				}
+				break;
+				
+			case 2:
+				if(!otherAgentsPlan[row][col]){
+					return dist;
+				}
+				break;
+		}
+		
+		dist += 1;
+		
+		for(Direction dir : Direction.values()){
+			exploreNewAux(row, col, dist, agentColor, otherAgentsPlan, boxColor, dir, mode);
+		}
+		
+		return -1;
+	}
+	
+	/*
+	 * This method contains conditions to continue the BFS and has several modes for the different cases.
+	 * The current row, and column
+	 * @param row
+	 * @param col
+	 * @param dist
+	 * @param agentColor
+	 * @param otherAgentsPlan
+	 * @param boxColor
+	 * @param dir
+	 * @param mode
+	 */
+	public void exploreNewAux(int row, int col, int dist, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, Direction dir, int mode) {
+		switch(dir) {
+			case left:
+				row -= 1;
+				break;
+			case right:
+				row += 1;
+				break;
+			case up:
+				col -= 1;
+				break;
+			case down:
+				col += 1;
+		}
+		
+		if(!walls[row][col] && copyOfLevelToSearch[row][col] != '!'){	// Check whether the new/neighbour cell has not already been explored
+			switch(mode) {
+			case 0:
+				queue.add(createPosDistArray(row, col, dist));	// Explores cells and add them to the queue if the wanted box is not in the current cell
+				break;
+				
+			case 1:
+				if(copyOfLevelToSearch[row][col] >= 'A' && copyOfLevelToSearch[row][col] <= 'Z' &&
+					this.colorAssignments.get(copyOfLevelToSearch[row][col]) != agentColor){	// Check that a box of the same color as the agent is not in the current cell
+					break;
+				}
+				queue.add(createPosDistArray(row,col, dist));
+				break;
+				
+			case 2:
+				if(otherAgentsPlan[row][col] && !differentColoredAgentInCell(row, col, boxColor)) {	// Checks whether the cell is in a critical section. PROBLEM: Never adds the free cell!!!
+					queue.add(createPosDistArray(row,col, dist));
+				}
+				
+			}
+			copyOfLevelToSearch[row][col] = '!';	// This marks that the cell has already been considered
+		}
+		
+	}
+	
+	public boolean differentColoredAgentInCell(int row, int col, Color boxColor) {
+		for(int i = 0; i < agents.length; i++) {
+			if(agents[i][0] == row && agents[i][1] == col && colorAssignments.get((char) (i + '0')) != boxColor) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	public void setWall(int row, int col, boolean setTo){
 		this.walls[row][col] = setTo;
