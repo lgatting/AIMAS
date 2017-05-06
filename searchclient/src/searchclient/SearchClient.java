@@ -220,13 +220,11 @@ public class SearchClient {
 			plan.add(new GoToHLA(box));
 			plan.add(new SatisfyGoalHLA(box, box.goal));
 		}
-
-		/*
-		for (Box box : agent.boxes) {
+		
+		/*for (Box box : agent.boxes) {
 			plan.add(new GoToHLA(box));
 			plan.add(new SatisfyGoalHLA(box, box.goal));
-		}
-		*/
+		}*/
 		
 		return plan;
 	}
@@ -262,7 +260,19 @@ public class SearchClient {
 			
 			this.initialState.agentNo = agentNo;
 			this.initialState.strategy = strategy;
-			strategy.addToFrontier(this.initialState);
+			
+			Node copy = this.initialState.ChildNode();
+			
+			for(int row = 0; row < copy.rows; row++) {
+				for(int col = 0; col < copy.cols; col++) {
+					if(colorAssignments.get(copy.boxes[row][col]) != colorAssignments.get((char)(agentNo + '0'))) {
+						copy.boxes[row][col] = 0;
+					}
+				}
+			}
+			
+			
+			strategy.addToFrontier(copy);
 			
 			System.err.println("Creating plan for agent " + agentNo);
 			LinkedList<Node> planForAgent = searchForAgent(strategy, agentNo);
@@ -270,6 +280,10 @@ public class SearchClient {
 		}
 
 		return agentPlans;
+	}
+	
+	private void plan(int agentNo, StrategyType strategyType, SearchClient client){
+		
 	}
 	
 	/**
@@ -474,7 +488,7 @@ public class SearchClient {
 	}
 	
 	/**
-	 * Assignes all boxes that have been assigned to goals to some agent.
+	 * Assigns all boxes that have been assigned to goals to some agent.
 	 */
 	private void createBoxAgentRelationship() {
 		// For now, assignes a box to the first available agent with matching color
@@ -500,18 +514,18 @@ public class SearchClient {
 		
 		// Sending actions to server only for SA
 		
-		LinkedList<String> solution = new LinkedList<String>();
+		/*LinkedList<String> solution = new LinkedList<String>();
 		for (Node n : agentPlans.get(0)) {
 			String act = n.action.toString();
 
 			solution.add("[" + act + "]");
 		}
 		
-		return solution;
+		return solution;*/
 		
 		// Sending joint actions to server for both SA and MA levels
-		//LinkedList<String> jointActions = resolveConflicts(agentPlans);
-		//return jointActions;
+		LinkedList<String> jointActions = resolveConflicts(agentPlans);
+		return jointActions;
 	}
 	
 	public boolean areAllPlanCounterEntriesNull(){
@@ -554,6 +568,7 @@ public class SearchClient {
 				System.err.println(strategy.searchStatus());
 				iterations = 0;
 			}
+            
 
 			if (strategy.frontierIsEmpty()) {
 				return null;
@@ -634,17 +649,6 @@ public class SearchClient {
 					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
 					break;
 				}
-			}
-
-			RoomDetector rd = new RoomDetector();
-			int[][] roomRegions = rd.detectRooms(client.initialState.walls, client.initialState.rows, client.initialState.cols,
-						   						 client.initialState.agents[0][0], client.initialState.agents[0][1]);
-			
-			for(int i = 0; i < client.initialState.rows; i++){
-				for(int j = 0; j < client.initialState.cols; j++){
-					//System.err.print(roomRegions[i][j]);
-				}
-				//System.err.println("");
 			}
 		}
 	}

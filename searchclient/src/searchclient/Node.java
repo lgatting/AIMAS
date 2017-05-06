@@ -235,7 +235,7 @@ public class Node {
 		return this.boxes[row][col] > 0;
 	}
 
-	private Node ChildNode() {
+	public Node ChildNode() {
 		Node copy = new Node(this, this.rows, this.cols, this.agentCount);
 		
 		copy.colorAssignments = this.colorAssignments;
@@ -244,6 +244,7 @@ public class Node {
 		copy.goalIds = this.goalIds;
 		copy.action = this.action;
 		copy.strategy = this.strategy;
+		copy.agentNo = this.agentNo;
 		
 		copy.agentsActions = this.agentsActions;
 		copy.pastActions = this.pastActions;
