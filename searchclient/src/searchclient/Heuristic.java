@@ -205,7 +205,7 @@ public abstract class Heuristic implements Comparator<Node> {
 						if (n.action.actionType == Type.Pull)
 							cost += 3 * precision;
 						
-						cost += n.boxesOnWrongGoalsCount() * 1000;
+						//cost += n.boxesOnWrongGoalsCount() * 1000;
 						
 						return cost;
 					}
