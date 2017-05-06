@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 package models;
 
 public class Goal implements Comparable<Goal> {
@@ -45,33 +44,3 @@ public class Goal implements Comparable<Goal> {
 		return "Goal " + letter + " (" + id + "); Dep's: " + numberOfDependencies + "; Lewis: " + lewisScore + ", PS: " + positionPenalty; 
 	}
 }
-=======
-package models;
-
-public class Goal implements Comparable<Goal> {
-	/**
-	 * ID of this goal.
-	 */
-	public int id;
-	
-	public char letter;
-	
-	public int numberOfDependencies;
-	
-	public Goal(int id, char letter) {
-		this.id = id;
-		this.letter = letter;
-		this.numberOfDependencies = 0;
-	}
-	
-	@Override
-	public int compareTo(Goal g) {
-		return g.numberOfDependencies - numberOfDependencies;
-	}
-	
-	@Override
-	public String toString() {
-		return "Goal " + letter + " (" + id + "), " + numberOfDependencies; 
-	}
-}
->>>>>>> 891467258e9c7249ab49c31bbd2d423ba87330b2
