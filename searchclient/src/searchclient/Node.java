@@ -120,7 +120,22 @@ public class Node {
 	}
 	
 	public boolean isGoalState() {
-		return unsatisfiedGoalCount() == 0;
+		if (agentsActions != null && agentsActions.size() == 0) {
+			// Agent has satisfied all his actions; check HLAs and if none of them is broken, then consider
+			// the goal state to be reached
+			
+			System.err.println("Goal state reached");
+			
+			checkHLAs();
+
+			System.err.println("Refreshed HLAs: " + agentsActions.size());
+			System.err.println(this);
+			
+			if (agentsActions.size() == 0)
+				return true;
+		}
+		
+		return false;
 	}
 	
 	public int unsatisfiedGoalCount() {

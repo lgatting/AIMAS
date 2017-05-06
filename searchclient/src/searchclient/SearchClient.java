@@ -307,14 +307,16 @@ public class SearchClient {
 	 * @return An array of strings where each string is a representation of joint action ready to be sent to a server.
 	 */
 	private LinkedList<String> resolveConflicts(HashMap<Integer, LinkedList<Node>> agentPlans) {
-		for(int agent = 0; agent < this.agentCount; agent++) {	    
+		for(int agent = 0; agent < agentCount; agent++) {	    
 			hmap.put(agent, new  LinkedList<String>()); /// add empty cs linked for each agent
 		}
+		
+		int longestPlanSize = longestPlanSize(agentPlans);
     
 		/// add route coordinates to corresponding linked list
-	    for(int step = 0; step < longestPlanSize(agentPlans); step++) {
-	    	for(int agent = 0; agent < this.agentCount; agent++) {
-	    		String newagentpos=""  ;
+	    for(int step = 0; step < longestPlanSize; step++) {
+	    	for(int agent = 0; agent < agentCount; agent++) {
+	    		String newagentpos = "";
 	    		if(step < agentPlans.get(agent).size()){
 	    			int newagentrow = agentPlans.get(agent).get(step).agents[agent][0]; // agent row
 		    		int newagentcol = agentPlans.get(agent).get(step).agents[agent][1]; // agent col
@@ -328,7 +330,7 @@ public class SearchClient {
 	    	}
 	    }
 	    
-	    for(int agent = 0; agent < this.agentCount; agent++) {	    
+	    for(int agent = 0; agent < agentCount; agent++) {	    
 			for(int j=0 ; j< hmap.get(0).size() ; j++){
 				//System.err.print(hmap.get(agent).get(j)+", ");
 			}
@@ -366,68 +368,91 @@ public class SearchClient {
 		boolean readyToleave = false ;
 		int readyincounter = 0;
 		
-		plancounter = new int[this.agentCount];
-		int[] planssteps = new int[this.agentCount];
+		plancounter = new int[agentCount];
+		int[] planssteps = new int[agentCount];
 		
 		/// set all plancounter entries to largestPlanSize
-		for(int i=0;i<plancounter.length;i++){
-			plancounter[i] =  hmap.get(0).size() ;
+		for (int i = 0; i < plancounter.length; i++) {
+			plancounter[i] = hmap.get(0).size();
 		}
 		
 		// set all planssteps to 0
-		for(int i=0;i<planssteps.length;i++){
-			planssteps[i] =  0 ;
+		for (int i = 0; i < planssteps.length; i++) {
+			planssteps[i] = 0;
 		}
 		
-		while(areAllPlanCounterEntriesNull()==false){
+		/*
+		for (int i = 0; i < longestPlanSize; i++) {
+			String jointAction = "[";
+
+			for(int agent = 0; agent < agentCount; agent++) {
+				Node agentPlan;
+				
+				if (agentPlans.get(agent).size() > i)
+					agentPlan = agentPlans.get(agent).get(i);
+				else
+					agentPlan = null;
+				
+				if (agentPlan != null) {
+					jointAction += agentPlan.action;
+				} else {
+					jointAction += "NoOp";
+				}
+				jointAction += ",";
+			}
 			
+			jointAction = jointAction.substring(0, jointAction.length() - 1) + "]";
+			
+	    	jointActions.add(jointAction);
+		}
+		*/
+		
+		int globalc = 0;
+		while (!areAllPlanCounterEntriesNull()) {
+			int actionc = 0;
 			String jointAction = "[";
 			
-			for(int agent=0; agent<this.agentCount; agent++){
+			for (int agent = 0; agent < agentCount; agent++) {
 				
 				// get agent pos
 			
-                if(planssteps[agent]>= agentPlans.get(agent).size()){
+                if(planssteps[agent] >= agentPlans.get(agent).size()){
                 	jointAction += "NoOp";
-	    		}
-                
-	    		else {
-	    			
+                	actionc++;
+	    		} else {
 					int newagentrow = agentPlans.get(agent).get(planssteps[agent]).agents[agent][0]; // agent row
 		    		int newagentcol = agentPlans.get(agent).get(planssteps[agent]).agents[agent][1]; // agent col
 		    		String newagentpos = newagentrow+"-"+newagentcol ;
 		    
-		    	if(sharecsdelay > 5) {
-		    		jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();			
-	    		    planssteps[agent]++;
-	    		    plancounter[agent]--;
-		    	} else if (criticalcells.getLast().equals(newagentpos) && usingcs==agent ) {
-	    			
-	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();			
-	    		    planssteps[agent]++;
-	    		    plancounter[agent]--;
-	    		    readyToleave = true ;
-	    			//System.err.print(" agent "+agent+" leaves critical section");
-	    		} else if (criticalcells.getFirst().equals(newagentpos) && usingcs==-1) {
-	    			usingcs = agent ;
-	    			//System.err.print(" agent "+agent+" is in the critical section");
-	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
-	    			 planssteps[agent]++;
-	    			 plancounter[agent]--;
-	    			
-	    		} else if (usingcs==agent) {
-	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
-	    			 planssteps[agent]++;
-		    		 plancounter[agent]--;
-	    		} else if (usingcs!=-1 && usingcs!=agent) {
-	    			jointAction += "NoOp";
-	    		} else {
-	    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
-	    			 planssteps[agent]++;
-		    		 plancounter[agent]--;
+			    	if(sharecsdelay > 5) {
+			    		jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
+		    		    planssteps[agent]++;
+		    		    plancounter[agent]--;
+			    	} else if (criticalcells.getLast().equals(newagentpos) && usingcs==agent) {
+		    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
+		    		    planssteps[agent]++;
+		    		    plancounter[agent]--;
+		    		    readyToleave = true;
+		    			//System.err.print(" agent "+agent+" leaves critical section");
+		    		} else if (criticalcells.getFirst().equals(newagentpos) && usingcs==-1) {
+		    			usingcs = agent ;
+		    			//System.err.print(" agent "+agent+" is in the critical section");
+		    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
+		    			planssteps[agent]++;
+		    			plancounter[agent]--;
+		    		} else if (usingcs==agent) {
+		    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
+		    			planssteps[agent]++;
+			    		plancounter[agent]--;
+		    		} else if (usingcs!=-1 && usingcs!=agent) {
+		    			jointAction += "NoOp";
+		    			actionc++;
+		    		} else {
+		    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
+		    			planssteps[agent]++;
+			    		plancounter[agent]--;
+		    		}
 	    		}
-	    		
-			}
 	    		
 	    		if(agent < this.agentCount - 1) {	// Add commas for all cases except the last one.
 	    			jointAction += ",";
@@ -442,23 +467,23 @@ public class SearchClient {
 			
 			if(readyToleave==true && readyincounter<2){
 				readyincounter++;
-			}
-			else if(readyincounter==2){
+			} else if(readyincounter==2){
 				usingcs = -1 ;
 				readyincounter = 0;
 				readyToleave=false;
 			}
 			
-			jointAction += "]";
-			//System.err.println(jointAction);
-	    	jointActions.add(jointAction);
+			if (actionc == agentCount)
+				globalc++;
 			
+			if (globalc == 20)
+				break;
+			
+			jointAction += "]";
+	    	jointActions.add(jointAction);
 		}
-		 
 		
-		
-		
-	//print agents route based on their location to be removed
+		//print agents route based on their location to be removed
 	    for(int k=0; k<hmap.size(); k++){
 
 	    	for(int j=0; j<hmap.get(k).size() ; j++){
@@ -512,29 +537,21 @@ public class SearchClient {
 
 		System.err.println("Planning finished for all agents.");
 		
-		// Sending actions to server only for SA
-		
-		/*LinkedList<String> solution = new LinkedList<String>();
-		for (Node n : agentPlans.get(0)) {
-			String act = n.action.toString();
-
-			solution.add("[" + act + "]");
-		}
-		
-		return solution;*/
-		
 		// Sending joint actions to server for both SA and MA levels
 		LinkedList<String> jointActions = resolveConflicts(agentPlans);
+		
+		System.err.println("Joint actions successfuly generated.");
+		System.err.println(jointActions);
+		
 		return jointActions;
 	}
 	
 	public boolean areAllPlanCounterEntriesNull(){
+		for (int i = 0; i < plancounter.length; i++)
+			if(plancounter[i] != 0)
+				return false;
 		
-		for(int i=0; i<plancounter.length; i++){
-			if(plancounter[i]!=0) return false ;
-		}
-		
-		return true ;
+		return true;
 	}
 	
 	public Strategy createStrategy(StrategyType searchType, SearchClient client) {
