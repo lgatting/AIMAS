@@ -95,12 +95,16 @@ public abstract class Heuristic implements Comparator<Node> {
 							n.strategy.refresh(n);
 							
 							List<Node> nodes = n.getExpandedNodes(0);
-
-							for (Node newNode : nodes)
-								n.strategy.addToFrontier(newNode);
 							
 							if (n.agentsActions.size() == 0)
 								n.checkHLAs();
+
+							for (Node newNode : nodes) {
+								System.err.println(newNode);
+								n.strategy.addToFrontier(newNode);
+							}
+							
+							System.err.println(n);
 							
 							return 0;
 						} 
@@ -115,7 +119,7 @@ public abstract class Heuristic implements Comparator<Node> {
 						
 						int cost = (int)Math.round(dist * precision);
 						
-						cost += Math.abs(pastGoalSatisficationHLAsCount - n.unsatisfiedGoalCount()) * precision * 5000; // 999999
+						cost += Math.abs(n.unsatisfiedGoalCount()) * precision * 5000; // 999999
 						
 						if (n.action.actionType != Type.Move)
 							// Previously MAX_VALUE
@@ -124,7 +128,7 @@ public abstract class Heuristic implements Comparator<Node> {
 						if (n.action.actionType == Type.Pull)
 							cost += 2 * precision;
 						
-						cost += n.boxesOnWrongGoalsCount() * 1000;
+						//cost += n.boxesOnWrongGoalsCount() * 1000;
 						
 						return cost;
 					}
@@ -169,11 +173,11 @@ public abstract class Heuristic implements Comparator<Node> {
 							
 							List<Node> nodes = n.getExpandedNodes(0);
 
-							for (Node newNode : nodes)
-								n.strategy.addToFrontier(newNode);
-							
 							if (n.agentsActions.size() == 0)
 								n.checkHLAs();
+
+							for (Node newNode : nodes)
+								n.strategy.addToFrontier(newNode);
 							
 							return 0;
 						}
@@ -192,18 +196,18 @@ public abstract class Heuristic implements Comparator<Node> {
 						double distAB = Math.sqrt(w*w + h*h);
 						
 						// The agent should stay as close to his box as possible at all times
-						distAB = distAB * 20;
+						distAB = distAB * 50;
 						
 						double dist = distBG + distAB;
 						
 						int cost = (int)Math.round(dist * precision);
 						
-						cost += Math.abs(pastGoalSatisficationHLAsCount - n.unsatisfiedGoalCount()) * precision * 1000;
+						cost += Math.abs(n.unsatisfiedGoalCount()) * precision * 1000;
 						
 						// Prefer pushing to pulling mainly because of the corridors since we don't want to end up
 						// locked up in there
 						if (n.action.actionType == Type.Pull)
-							cost += 3 * precision;
+							cost += 0 * precision;
 						
 						//cost += n.boxesOnWrongGoalsCount() * 1000;
 						
