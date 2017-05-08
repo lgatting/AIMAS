@@ -250,7 +250,7 @@ public class Node {
 		return this.boxes[row][col] > 0;
 	}
 
-	public Node ChildNode() {
+	private Node ChildNode() {
 		Node copy = new Node(this, this.rows, this.cols, this.agentCount);
 		
 		copy.colorAssignments = this.colorAssignments;
@@ -263,6 +263,30 @@ public class Node {
 		
 		copy.agentsActions = this.agentsActions;
 		copy.pastActions = this.pastActions;
+		
+		for (int row = 0; row < this.rows; row++) {
+			System.arraycopy(this.boxes[row], 0, copy.boxes[row], 0, this.cols);
+			System.arraycopy(this.boxIds[row], 0, copy.boxIds[row], 0, this.cols);
+		}
+		for (int agent = 0; agent < this.agentCount; agent++) {
+			System.arraycopy(this.agents[agent], 0, copy.agents[agent], 0, 2);
+		}
+		
+		return copy;
+	}
+	
+	public Node copyOfNode() {
+		Node copy = new Node(null, this.rows, this.cols, this.agentCount);
+		
+		copy.colorAssignments = this.colorAssignments;
+		copy.walls = this.walls;
+		copy.goals = this.goals;
+		copy.goalIds = this.goalIds;
+		copy.action = this.action;
+		copy.strategy = this.strategy;
+		copy.agentNo = this.agentNo;
+		
+		//copy.agentsActions = this.agentsActions;
 		
 		for (int row = 0; row < this.rows; row++) {
 			System.arraycopy(this.boxes[row], 0, copy.boxes[row], 0, this.cols);
@@ -332,6 +356,8 @@ public class Node {
 			if (hla instanceof SatisfyGoalHLA) {
 				SatisfyGoalHLA act = (SatisfyGoalHLA) hla;
 				
+				System.err.println("Checking HLA :" + act.toString());
+				
 				int[] goalPos = Utils.findGoalPosition(act.goal, goalIds);
 				int[] boxPos = Utils.findBoxPosition(act.box, boxIds);
 
@@ -362,6 +388,20 @@ public class Node {
 			}
 		}
 		return count;
+	}
+	
+	/**
+	 * Removes boxes that are of other colour than the agent.
+	 */
+	public void relaxNode() {
+		for(int row = 0; row < rows; row++) {
+			for(int col = 0; col < cols; col++) {
+				char boxChar = this.boxes[row][col];
+				if(boxChar > 0 && !sameColorAsAgent(this.agentNo, boxChar)) {
+					this.boxes[row][col] = 0;
+				}
+			}
+		}
 	}
 
 	@Override

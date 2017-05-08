@@ -1,5 +1,6 @@
 package searchclient;
 
+import java.util.LinkedList;
 import java.util.Set;
 
 import searchclient.Command.Dir;
@@ -138,5 +139,32 @@ public class Utils {
 	 */
 	public static boolean cellIsFree(Node n, int row, int col) {
 		return !n.walls[row][col] && n.boxes[row][col] == 0 && !n.agentAt(row,col) ;
+	}
+	
+	/**
+	 * Prints the list of actions for an agent
+	 * @param list
+	 */
+	public static void printListOfActions(LinkedList<Node> list) {
+		int listLength = list.size();
+		
+		System.err.print("List of actions for agent " + list.get(0).agentNo + ": [");
+		for(int i = 0; i < listLength; i++) {
+			System.err.print(list.get(i).action.toString());
+			
+			if(i < listLength-1) {
+				System.err.print(", ");
+			}
+		}
+		System.err.println("]");
+	}
+	
+	public static void printArray(char[][] boxes, int rows, int cols){
+		for(int row = 0; row < rows; row++) {
+			for(int col = 0; col < cols; col++) {
+				System.err.print(boxes[row][col]);
+			}
+			System.err.println("");
+		}
 	}
 }

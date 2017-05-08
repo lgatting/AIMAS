@@ -252,31 +252,35 @@ public class SearchClient {
 		
 		HashMap<Integer, LinkedList<Node>> agentPlans = new HashMap<Integer, LinkedList<Node>>();
 		
-		for (int agentNo = 0; agentNo < this.agentCount; agentNo++) {
+		for (int agentNo = 0; agentNo < agentCount; agentNo++) {
 			Strategy strategy = createStrategy(strategyType, client);
-			this.initialState.agentsActions = generateHLAPlan(getAgentObject(agentNo));
 			
-			System.err.println("HLA plan for agent " + agentNo + ": " + this.initialState.agentsActions);
+			Node copy = this.initialState.copyOfNode();
 			
-			this.initialState.agentNo = agentNo;
-			this.initialState.strategy = strategy;
+			copy.agentsActions = generateHLAPlan(getAgentObject(agentNo));
 			
-			Node copy = this.initialState.ChildNode();
+			System.err.println("HLA plan for agent " + agentNo + ": " + copy.agentsActions);
 			
-			for(int row = 0; row < copy.rows; row++) {
-				for(int col = 0; col < copy.cols; col++) {
-					if(colorAssignments.get(copy.boxes[row][col]) != colorAssignments.get((char)(agentNo + '0'))) {
-						copy.boxes[row][col] = 0;
-					}
-				}
-			}
+			copy.agentNo = agentNo;
+			copy.strategy = strategy;
 			
+			System.err.println("Creating a relaxed plan for agent " + agentNo);
+			
+			copy.relaxNode();
 			
 			strategy.addToFrontier(copy);
 			
-			System.err.println("Creating plan for agent " + agentNo);
 			LinkedList<Node> planForAgent = searchForAgent(strategy, agentNo);
+			
 			agentPlans.put(agentNo, planForAgent);
+			
+			if(planForAgent != null) {
+				System.err.println("Solution found for agent " + agentNo + ":");
+				for(Node n : planForAgent) {
+					System.err.println(n.toString());
+				}
+			}
+
 		}
 
 		return agentPlans;

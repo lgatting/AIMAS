@@ -89,12 +89,12 @@ public abstract class Heuristic implements Comparator<Node> {
 						if (Utils.isNeighboringPosition(agentRow, agentCol, boxRow, boxCol)) {
 							// This action has been satisfied, move to next HLA
 							n.pastActions.add(n.agentsActions.remove(0));
-							System.err.println("removed1");
-							System.err.println(n.unsatisfiedGoalCount());
+							System.err.println("GoToHLA satisfied, now removed");
+							System.err.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
 							System.err.println(n.agentsActions);
 							n.strategy.refresh(n);
 							
-							List<Node> nodes = n.getExpandedNodes(0);
+							List<Node> nodes = n.getExpandedNodes(n.agentNo);
 							
 							if (n.agentsActions.size() == 0)
 								n.checkHLAs();
@@ -166,12 +166,12 @@ public abstract class Heuristic implements Comparator<Node> {
 						if (goalRow == boxRow && goalCol == boxCol) {
 							// This action has been satisfied, move to next HLA
 							n.pastActions.add(n.agentsActions.remove(0));
-							System.err.println("removed2");
-							System.err.println(n.unsatisfiedGoalCount());
+							System.err.println("SatisfyGoalHLA satisfied, now removed");
+							System.err.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
 							System.err.println(n.agentsActions);
 							n.strategy.refresh(n);
 							
-							List<Node> nodes = n.getExpandedNodes(0);
+							List<Node> nodes = n.getExpandedNodes(n.agentNo);
 
 							if (n.agentsActions.size() == 0)
 								n.checkHLAs();

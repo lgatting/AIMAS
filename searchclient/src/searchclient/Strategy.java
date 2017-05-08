@@ -59,6 +59,8 @@ public abstract class Strategy extends Thread {
 
 	@Override
 	public abstract String toString();
+	
+	public abstract void clearFrontier();
 
 	public static class StrategyBFS extends Strategy {
 		private ArrayDeque<Node> frontier;
@@ -104,6 +106,13 @@ public abstract class Strategy extends Thread {
 		@Override
 		public String toString() {
 			return "Breadth-first Search";
+		}
+		
+		@Override
+		public void clearFrontier() {
+			frontierSet.clear();
+			frontier.clear();
+			super.explored.clear();
 		}
 	}
 
@@ -151,6 +160,13 @@ public abstract class Strategy extends Thread {
 		@Override
         public String toString() {
 			return "Depth-first Search";
+		}
+		
+		@Override
+		public void clearFrontier() {
+			frontierSet.clear();
+			frontier.clear();
+			super.explored.clear();
 		}
 	}
 
@@ -212,6 +228,13 @@ public abstract class Strategy extends Thread {
 		@Override
 		public String toString() {
 			return "Best-first Search using " + this.heuristic.toString();
+		}
+		
+		@Override
+		public void clearFrontier() {
+			frontierSet.clear();
+			frontier.clear();
+			super.explored.clear();
 		}
 	}
 }
