@@ -349,7 +349,7 @@ public class SearchClient {
 	             /// implement solution for many critical sections
 	    
 	    
-	    LinkedList<String> criticalcells = new  LinkedList<String>();
+	    LinkedList<String> criticalcells = new LinkedList<String>();
 	    int usingcs = -1 ;
 	    boolean sharecs = false ;
 	    int sharecsdelay = 0 ;
@@ -541,11 +541,49 @@ public class SearchClient {
 
 		System.err.println("Planning finished for all agents.");
 		
-		// Sending joint actions to server for both SA and MA levels
-		LinkedList<String> jointActions = resolveConflicts(agentPlans);
+//		// Sending joint actions to server for both SA and MA levels
+//		LinkedList<String> jointActions = resolveConflicts(agentPlans);
+//		System.err.println("Joint actions successfuly generated.");
+//		System.err.println(jointActions);
+//		
+//		return jointActions;
 		
-		System.err.println("Joint actions successfuly generated.");
-		System.err.println(jointActions);
+		//return agentPlans;
+		
+		return formJointActions(agentPlans);
+		
+		
+	}
+	
+	public LinkedList<String> formJointActions(HashMap<Integer, LinkedList<Node>> listOfActions) {
+		int longestPlan = 0;
+		for(int agentNo = 0; agentNo < agentCount; agentNo++) {
+			int planSize = listOfActions.get(agentNo).size();
+			if(planSize > longestPlan) {
+				longestPlan = planSize; 
+			}
+		}
+		
+		LinkedList<String> jointActions = new LinkedList<String>();
+		
+		for(int step = 0; step < longestPlan; step++) {
+			String jointAction = "[";
+			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
+				LinkedList<Node> curPlan = listOfActions.get(agentNo);
+				if(step < curPlan.size()) {
+					jointAction += curPlan.get(step).action.toString();
+				}
+				else {
+					jointAction += "NoOp";
+				}
+				if(agentNo != agentCount - 1) {
+					jointAction += ",";
+				}
+			}
+			jointAction += "]";
+			
+			jointActions.add(jointAction);
+		}
 		
 		return jointActions;
 	}
@@ -648,6 +686,18 @@ public class SearchClient {
         	strategyType = StrategyType.bfs;
             System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
         }
+        
+        
+//        HashMap<Integer, LinkedList<Node>> agentPlans;
+//        
+//        agentPlans = client.search(strategyType, client);
+//        
+//        while(true){
+//        	agentPlans = client.search(strategyType, client);
+//        	while(/*noConflict in joint actions*/) {
+//        		// Generate
+//        	}
+//        }
         
 		LinkedList<String> solution;
 		try {
