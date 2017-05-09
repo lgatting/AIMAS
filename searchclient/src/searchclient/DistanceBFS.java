@@ -24,20 +24,20 @@ public class DistanceBFS {
 		left, right, up, down
 	}
 	
-	public DistanceBFS(boolean[][] walls, char[][] boxes, int[][] agents, HashMap<Character, Color> colorAssignments, int rows, int cols){
-		this.walls = walls;
-		this.rows = rows;
-		this.cols = cols;
-		this.agents = agents;
-		this.colorAssignments = colorAssignments;
+	public DistanceBFS(Node n){
+		this.walls = n.walls;
+		this.rows = n.rows;
+		this.cols = n.cols;
+		this.agents = n.agents;
+		this.colorAssignments = n.colorAssignments;
 		
 		levelToSearch = new char[rows][cols];
 		copyOfLevelToSearch = new char[rows][cols];
 		
 		for(int row = 0; row < rows; row++){
 			for(int col = 0; col < cols; col++){
-				if(boxes[row][col] > 0){
-					levelToSearch[row][col] = boxes[row][col];
+				if(n.boxes[row][col] > 0){
+					levelToSearch[row][col] = n.boxes[row][col];
 				}
 				else {
 					levelToSearch[row][col] = '?';

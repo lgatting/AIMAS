@@ -688,16 +688,58 @@ public class SearchClient {
         }
         
         
-//        HashMap<Integer, LinkedList<Node>> agentPlans;
-//        
-//        agentPlans = client.search(strategyType, client);
-//        
-//        while(true){
-//        	agentPlans = client.search(strategyType, client);
-//        	while(/*noConflict in joint actions*/) {
-//        		// Generate
-//        	}
-//        }
+        
+        /*
+        HashMap<Integer, Belief> beliefs;	// HasMaps may not be necessary if the below agent control is made into an object.
+        HashMap<Integer, Intention> intentions;
+        HashMap<Integer, Desire> desires;
+        
+        Perception p = readLevelState();
+        for(int agentNo = 0; agentNo < agentCount; agentNo++) {
+        	Belief b = new Belief(null, p);
+        	beliefs.add(agentNo, b);	// Adds the initial belief for each agent
+        	intentions.add(agentNo, create some initial intentions);
+    	}
+    	*/
+        
+        /*
+        Belief b = initialBelief();
+        Intention i = initialIntention();
+        
+        // Threading required to make each agent send their action then attempt to perform the action.
+        while(true) {
+        	Perception p = readLevelState();
+    		b = brf(b, p);
+    		Desire d = options(b, i);
+    		i = filter(b, d, i);
+    		Plan pi = plan(b, i);
+    		while(!pi.isEmpty() && !succeeded(i, b) && !impossible(i, b)) {
+        			Action a = pi.pop();
+        			execute(a); // this action must be executed simultaneously with other agent's actions. Threading is required for this to work.
+        			// Only after the joint action has been performed shall the control agent be allowed to continue...
+        			Perception p = readLevelState();
+        			b = brf(b, p);
+        			if(reconsider(i, b)) {
+        				d = options(b, i);
+        				i = filter(b, d, i);
+        			}
+        			if !sound(pi, i, b) {
+        				pi = plan(b, i);
+    				}
+    		}
+        }
+        
+        HashMap<Integer, LinkedList<Node>> agentPlans;
+        
+        agentPlans = client.search(strategyType, client);
+        
+        while(true){
+        	agentPlans = client.search(strategyType, client);
+        	while() {
+        		// Generate
+        	}
+        }
+        */
         
 		LinkedList<String> solution;
 		try {
@@ -716,10 +758,10 @@ public class SearchClient {
 			for (String s : solution) {
 				System.out.println(s);
 				String response = serverMessages.readLine();
-				if (response.contains("false")) {
+				/*if (response.contains("false")) {
 					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
 					break;
-				}
+				}*/
 			}
 		}
 	}

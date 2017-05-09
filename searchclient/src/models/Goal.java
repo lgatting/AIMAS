@@ -41,6 +41,6 @@ public class Goal implements Comparable<Goal> {
 	
 	@Override
 	public String toString() {
-		return "Goal " + letter + " (" + id + "); Dep's: " + numberOfDependencies + "; Lewis: " + lewisScore + ", PS: " + positionPenalty; 
+		return "(Goal " + letter + " (" + id + "); Dep's: " + numberOfDependencies + "; Lewis: " + lewisScore + "; PS: " + positionPenalty + ")"; 
 	}
 }
