@@ -134,9 +134,14 @@ public class Node {
 				
 				int[] boxPos = Utils.findBoxPosition(((GoToHLA) curAction).box, boxIds);
 				
-				System.err.println("Reached box (" + boxes[boxPos[0]][boxPos[1]] + ")");
-				
-				return Utils.isNeighboringPosition(agentRow, agentCol, boxPos[0], boxPos[1]);
+				if(Utils.isNeighboringPosition(agentRow, agentCol, boxPos[0], boxPos[1])) {
+					pastActions.add(curAction);
+					strategy.clearFrontier();
+					System.err.println("Reached box (" + boxes[boxPos[0]][boxPos[1]] + ")");
+					
+					curAction = null;
+					return true;
+				}
 			}
 			else if (curAction instanceof SatisfyGoalHLA) { //Maybe buggy?
 				int[] boxPos = Utils.findBoxPosition(((SatisfyGoalHLA) curAction).box, boxIds);

@@ -87,24 +87,24 @@ public abstract class Heuristic implements Comparator<Node> {
 					if (boxRow != -1) {
 						if (Utils.isNeighboringPosition(agentRow, agentCol, boxRow, boxCol)) {
 							// This action has been satisfied, move to next HLA
-							n.pastActions.add(n.curAction);
+							//n.pastActions.add(n.curAction);
 							//n.curAction = null;
-							System.err.println("GoToHLA satisfied, now removed");
-							System.err.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
-							System.err.println(n.curAction);
-							n.strategy.refresh(n);
+							//System.err.println("GoToHLA satisfied, now removed");
+							//System.err.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
+							//System.err.println(n.curAction);
+							//n.strategy.refresh(n);
 							
-							List<Node> nodes = n.getExpandedNodes(n.agentNo);
+							//List<Node> nodes = n.getExpandedNodes(n.agentNo);
 							
 							/*if (n.curAction.size() == 0)
 								n.checkHLAs();*/
 
-							for (Node newNode : nodes) {
-								System.err.println(newNode);
-								n.strategy.addToFrontier(newNode);
-							}
-							
-							System.err.println(n);
+//							for (Node newNode : nodes) {
+//								System.err.println(newNode);
+//								n.strategy.addToFrontier(newNode);
+//							}
+//							
+//							System.err.println(n);
 							
 							return 0;
 						} 
@@ -164,21 +164,21 @@ public abstract class Heuristic implements Comparator<Node> {
 					// the other value must've been set as well
 					if (boxRow != -1 && goalRow != -1) {
 						if (goalRow == boxRow && goalCol == boxCol) {
-							// This action has been satisfied, move to next HLA
-							n.pastActions.add(n.curAction);
-							//n.curAction = null;
-							System.err.println("SatisfyGoalHLA satisfied, now removed");
-							System.err.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
-							System.err.println(n.curAction);
-							n.strategy.refresh(n);
-							
-							List<Node> nodes = n.getExpandedNodes(n.agentNo);
-
-//							if (n.curAction.size() == 0)
-//								n.checkHLAs();
-
-							for (Node newNode : nodes)
-								n.strategy.addToFrontier(newNode);
+//							// This action has been satisfied, move to next HLA
+//							n.pastActions.add(n.curAction);
+//							//n.curAction = null;
+//							System.err.println("SatisfyGoalHLA satisfied, now removed");
+//							System.err.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
+//							System.err.println(n.curAction);
+//							//n.strategy.refresh(n);
+//							
+//							List<Node> nodes = n.getExpandedNodes(n.agentNo);
+//
+////							if (n.curAction.size() == 0)
+////								n.checkHLAs();
+//
+//							for (Node newNode : nodes)
+//								n.strategy.addToFrontier(newNode);
 							
 							return 0;
 						}

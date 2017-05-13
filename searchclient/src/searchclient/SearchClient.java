@@ -220,7 +220,7 @@ public class SearchClient {
 		
 		for (Box box : orderedBoxes) {
 			plan.add(new GoToHLA(box));
-			//plan.add(new SatisfyGoalHLA(box, box.goal));
+			plan.add(new SatisfyGoalHLA(box, box.goal));
 		}
 		
 		/*for (Box box : agent.boxes) {
