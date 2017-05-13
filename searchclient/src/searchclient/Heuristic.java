@@ -99,12 +99,8 @@ public abstract class Heuristic implements Comparator<Node> {
 							if (n.agentsActions.size() == 0)
 								n.checkHLAs();
 
-							for (Node newNode : nodes) {
-								System.err.println(newNode);
+							for (Node newNode : nodes)
 								n.strategy.addToFrontier(newNode);
-							}
-							
-							System.err.println(n);
 							
 							return 0;
 						} 

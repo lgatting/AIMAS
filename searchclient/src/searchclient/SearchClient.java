@@ -276,9 +276,6 @@ public class SearchClient {
 			
 			if(planForAgent != null) {
 				System.err.println("Solution found for agent " + agentNo + ":");
-				for(Node n : planForAgent) {
-					System.err.println(n.toString());
-				}
 			}
 
 		}
@@ -506,13 +503,32 @@ public class SearchClient {
 	 * All goals will be assigned some distinct box and no two goals will be assigned the same box.
 	 */
 	private void createGoalBoxRelationship() {
-		for (Goal goal : discoveredGoals) {
-			for (Box box : discoveredBoxes) {
+		int bestDist = Integer.MAX_VALUE;
+		Goal bestGoal = null;
+		
+		for (Box box : discoveredBoxes) {
+			int[] boxPos = Utils.findBoxPosition(box, this.initialState.boxIds);
+
+			for (Goal goal : discoveredGoals) {
+				int[] goalPos = Utils.findGoalPosition(goal, this.initialState.goalIds);
+				
 				if (box.goal == null && box.letter == goal.letter) {
-					box.goal = goal;
-					break;
+					int pathLength = (new DistanceBFS(this.initialState)).distance(goalPos[0], goalPos[1], boxPos[0], boxPos[1]);
+
+					if (pathLength != -1 && pathLength < bestDist) {
+						bestDist = pathLength;
+						bestGoal = goal;
+					}
 				}
 			}
+			
+			box.goal = bestGoal;
+			
+			bestGoal = null;
+			bestDist = Integer.MAX_VALUE;
+			
+			if (box.letter == 'h')
+				System.err.println("H:" + box.goal);
 		}
 	}
 	

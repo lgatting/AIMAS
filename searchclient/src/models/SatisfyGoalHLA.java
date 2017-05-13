@@ -21,6 +21,6 @@ public class SatisfyGoalHLA extends HighLevelAction {
 	
 	@Override
 	public String toString() {
-		return "SatisfyGoal " + box.letter + " (" + box.id + ") with " + Character.toUpperCase(box.letter) + " (" + box.id + ")";
+		return "SatisfyGoal " + goal.letter + " (" + goal.id + ") with " + Character.toUpperCase(box.letter) + " (" + box.id + ")";
 	}
 }

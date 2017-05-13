@@ -129,7 +129,6 @@ public class Node {
 			checkHLAs();
 
 			System.err.println("Refreshed HLAs: " + agentsActions.size());
-			System.err.println(this);
 			
 			if (agentsActions.size() == 0)
 				return true;
