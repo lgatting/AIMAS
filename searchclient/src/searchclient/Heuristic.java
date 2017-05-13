@@ -54,17 +54,16 @@ public abstract class Heuristic implements Comparator<Node> {
 		// Since we cannot use decimal numbers for the comparator, we'll multiply the result to account for the small differences
 		int precision = 100;
 		
-		if (n.agentsActions.size() == 0) {
+		if (n.curAction == null) {
 			// No other HLAs; heuristic function cannot help 
 			return 1;
 		}
 		
-		HighLevelAction hla = n.agentsActions.get(0);
+		HighLevelAction hla = n.curAction;
 		
 		int pastGoalSatisficationHLAsCount = 0;
-		for (HighLevelAction h : n.agentsActions)
-			if (h instanceof SatisfyGoalHLA)
-				pastGoalSatisficationHLAsCount++;
+		if (n.curAction instanceof SatisfyGoalHLA)
+			pastGoalSatisficationHLAsCount++;
 		
 		if (hla instanceof GoToHLA) {
 			GoToHLA action = (GoToHLA) hla;
@@ -88,16 +87,17 @@ public abstract class Heuristic implements Comparator<Node> {
 					if (boxRow != -1) {
 						if (Utils.isNeighboringPosition(agentRow, agentCol, boxRow, boxCol)) {
 							// This action has been satisfied, move to next HLA
-							n.pastActions.add(n.agentsActions.remove(0));
+							n.pastActions.add(n.curAction);
+							//n.curAction = null;
 							System.err.println("GoToHLA satisfied, now removed");
 							System.err.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
-							System.err.println(n.agentsActions);
+							System.err.println(n.curAction);
 							n.strategy.refresh(n);
 							
 							List<Node> nodes = n.getExpandedNodes(n.agentNo);
 							
-							if (n.agentsActions.size() == 0)
-								n.checkHLAs();
+							/*if (n.curAction.size() == 0)
+								n.checkHLAs();*/
 
 							for (Node newNode : nodes) {
 								System.err.println(newNode);
@@ -165,16 +165,17 @@ public abstract class Heuristic implements Comparator<Node> {
 					if (boxRow != -1 && goalRow != -1) {
 						if (goalRow == boxRow && goalCol == boxCol) {
 							// This action has been satisfied, move to next HLA
-							n.pastActions.add(n.agentsActions.remove(0));
+							n.pastActions.add(n.curAction);
+							//n.curAction = null;
 							System.err.println("SatisfyGoalHLA satisfied, now removed");
 							System.err.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
-							System.err.println(n.agentsActions);
+							System.err.println(n.curAction);
 							n.strategy.refresh(n);
 							
 							List<Node> nodes = n.getExpandedNodes(n.agentNo);
 
-							if (n.agentsActions.size() == 0)
-								n.checkHLAs();
+//							if (n.curAction.size() == 0)
+//								n.checkHLAs();
 
 							for (Node newNode : nodes)
 								n.strategy.addToFrontier(newNode);
@@ -209,7 +210,14 @@ public abstract class Heuristic implements Comparator<Node> {
 						if (n.action.actionType == Type.Pull)
 							cost += 0 * precision;
 						
+						if(action.box.letter == 'c') {
+							System.err.println("aRow, aCol:" + agentRow + "," + agentCol);
+						}
+						
 						//cost += n.boxesOnWrongGoalsCount() * 1000;
+						if(action.box.letter == 'c') {
+							System.err.println("BG, AB:" + distBG + "," + distAB);
+						}
 						
 						return cost;
 					}
@@ -217,11 +225,11 @@ public abstract class Heuristic implements Comparator<Node> {
 			}
 		} else {
 			// Unknown action; heuristic is unable to help
-			return 1;
+			return 1000000;
 		}
 		
 		// This scenario will not happen since both agent and the box must be eventually found
-		return 1;
+		return 1000000;
 	}
 
 	public abstract int f(Node n);

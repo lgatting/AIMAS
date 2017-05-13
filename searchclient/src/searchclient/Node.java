@@ -59,9 +59,14 @@ public class Node {
 	public int[][] agents;
 	
 	/**
-	 * A list of actions that this agent needs to perform in order to satisfy all his goals.
+	 * A list of planned actions.
 	 */
-	public List<HighLevelAction> agentsActions;
+	public List<HighLevelAction> plannedActions;
+	
+	/**
+	 * A list of actions that this agent needs to perform in order to satisfy the set of HLA.
+	 */
+	public HighLevelAction curAction;
 	
 	/**
 	 * HLAs that have already been executed executed.
@@ -99,6 +104,8 @@ public class Node {
 		this.agents = new int[agentCount][2];
 		this.agentCount = agentCount;
 		
+		this.plannedActions = new ArrayList<HighLevelAction>();
+		this.curAction = null;
 		this.pastActions = new ArrayList<HighLevelAction>();
 		
 		this.rows = rows;
@@ -120,19 +127,35 @@ public class Node {
 	}
 	
 	public boolean isGoalState() {
-		if (agentsActions != null && agentsActions.size() == 0) {
+		if (curAction != null) {
+			if (curAction instanceof GoToHLA) {
+				int agentRow = agents[agentNo][0];
+				int agentCol = agents[agentNo][1];
+				
+				int[] boxPos = Utils.findBoxPosition(((GoToHLA) curAction).box, boxIds);
+				
+				System.err.println("Reached box (" + boxes[boxPos[0]][boxPos[1]] + ")");
+				
+				return Utils.isNeighboringPosition(agentRow, agentCol, boxPos[0], boxPos[1]);
+			}
+			else if (curAction instanceof SatisfyGoalHLA) { //Maybe buggy?
+				int[] boxPos = Utils.findBoxPosition(((SatisfyGoalHLA) curAction).box, boxIds);
+				int[] goalPos = Utils.findGoalPosition(((SatisfyGoalHLA) curAction).goal, goalIds);
+				
+				return boxPos[0] == goalPos[0] && boxPos[1] == goalPos[1];
+				
+				//return Character.toLowerCase(boxes[boxPos[0]][boxPos[1]]) == goals[boxPos[0]][boxPos[1]];
+			}
 			// Agent has satisfied all his actions; check HLAs and if none of them is broken, then consider
 			// the goal state to be reached
 			
-			System.err.println("Goal state reached");
 			
-			checkHLAs();
-
-			System.err.println("Refreshed HLAs: " + agentsActions.size());
-			System.err.println(this);
 			
-			if (agentsActions.size() == 0)
-				return true;
+			//checkHLAs();
+			
+			//System.err.println(this);
+			
+			//return true;
 		}
 		
 		return false;
@@ -261,7 +284,8 @@ public class Node {
 		copy.strategy = this.strategy;
 		copy.agentNo = this.agentNo;
 		
-		copy.agentsActions = this.agentsActions;
+		copy.plannedActions = this.plannedActions;
+		copy.curAction = this.curAction;
 		copy.pastActions = this.pastActions;
 		
 		for (int row = 0; row < this.rows; row++) {
@@ -351,7 +375,7 @@ public class Node {
 	 * Checks whether some of the HLAs need to be repaired (such as SatisfyGoal HLA if it
 	 * was destroyed on the way).
 	 */
-	public void checkHLAs() {
+	/*public void checkHLAs() {
 		for (HighLevelAction hla : pastActions) {
 			if (hla instanceof SatisfyGoalHLA) {
 				SatisfyGoalHLA act = (SatisfyGoalHLA) hla;
@@ -364,15 +388,15 @@ public class Node {
 				if (goalPos[0] != boxPos[0] || goalPos[1] != boxPos[1]) {
 					System.err.println("Broken HLA detected!");
 					
-					agentsActions.add(new GoToHLA(act.box));
-					agentsActions.add(new SatisfyGoalHLA(act.box, act.goal));
+					curAction.add(new GoToHLA(act.box));
+					curAction.add(new SatisfyGoalHLA(act.box, act.goal));
 					
 					// Add just one action and after satisfying we'll see what to do next
 					break;
 				}
 			}
 		}
-	}
+	}*/
 	
 	/**
 	 * Counts how many boxes are placed on incorrect goal in this node.
@@ -401,6 +425,17 @@ public class Node {
 					this.boxes[row][col] = 0;
 				}
 			}
+		}
+	}
+	
+	/**
+	 * Removes the head of plannedActions and inserts it into curActions.
+	 * The next time search is called, a plan will be returned for the next HLA.
+	 */
+	public void addPlannedAction() {
+		if(!plannedActions.isEmpty()) {
+			HighLevelAction hla = plannedActions.remove(0);
+			curAction = hla;
 		}
 	}
 

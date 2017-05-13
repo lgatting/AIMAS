@@ -74,32 +74,34 @@ public class DeadEndCorridorSolverV2 {
 			i++;
 		}
 		
-		for (int k = 0; k < frontier.size(); ) {
-			Goal g = frontier.get(k);
-			
-			int[] goalPos = goalPositions.get(g.id);
-			
-			int wallCount = Utils.neighbouringWallsCount(goalPos[0], goalPos[1], node.walls);
-			
-			if (wallCount == 2 || wallCount == 3) {
-				int[] deadend1 = explore(goalPos, freeNeighborsDir(goalPos).get(0));
-				int[] deadend2 = null;
+		if(i > 1) {
+			for (int k = 0; k < frontier.size(); ) {
+				Goal g = frontier.get(k);
 				
-				if (wallCount == 3)
-					deadend2 = goalPos;
-				if (wallCount == 2)
-					deadend2 = explore(goalPos, freeNeighborsDir(goalPos).get(1));
+				int[] goalPos = goalPositions.get(g.id);
 				
-				if ((deadend1 == null && deadend2 == null) || (deadend1 != null && deadend2 != null))
-					// This goal is in a corridor that is open from both ends
+				int wallCount = Utils.neighbouringWallsCount(goalPos[0], goalPos[1], node.walls);
+				
+				if (wallCount == 2 || wallCount == 3) {
+					int[] deadend1 = explore(goalPos, freeNeighborsDir(goalPos).get(0));
+					int[] deadend2 = null;
+					
+					if (wallCount == 3)
+						deadend2 = goalPos;
+					if (wallCount == 2)
+						deadend2 = explore(goalPos, freeNeighborsDir(goalPos).get(1));
+					
+					if ((deadend1 == null && deadend2 == null) || (deadend1 != null && deadend2 != null))
+						// This goal is in a corridor that is open from both ends
+						frontier.remove(g);
+					if (deadend1 != null)
+						findDependencies(deadend1, freeNeighborsDir(deadend1).get(0), null);
+					if (deadend2 != null)
+						findDependencies(deadend2, freeNeighborsDir(deadend2).get(0), null);
+				} else {
+					// This goal is not in a corridor
 					frontier.remove(g);
-				if (deadend1 != null)
-					findDependencies(deadend1, freeNeighborsDir(deadend1).get(0), null);
-				if (deadend2 != null)
-					findDependencies(deadend2, freeNeighborsDir(deadend2).get(0), null);
-			} else {
-				// This goal is not in a corridor
-				frontier.remove(g);
+				}
 			}
 		}
 		

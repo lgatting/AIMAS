@@ -43,6 +43,8 @@ public class SearchClient {
 	private Set<Box> discoveredBoxes;
 	private Set<Agent> discoveredAgents;
 	
+	public HashMap<Integer, Node> agentBeliefs = new HashMap<Integer, Node>();
+	
 	public static enum StrategyType {
 		bfs, dfs, astar, wastar, greedy
 	}
@@ -218,7 +220,7 @@ public class SearchClient {
 		
 		for (Box box : orderedBoxes) {
 			plan.add(new GoToHLA(box));
-			plan.add(new SatisfyGoalHLA(box, box.goal));
+			//plan.add(new SatisfyGoalHLA(box, box.goal));
 		}
 		
 		/*for (Box box : agent.boxes) {
@@ -248,18 +250,15 @@ public class SearchClient {
 	 * @param client
 	 * @return
 	 */
-	private HashMap<Integer, LinkedList<Node>> discoverAgentPlans(StrategyType strategyType, SearchClient client) {
-		
-		HashMap<Integer, LinkedList<Node>> agentPlans = new HashMap<Integer, LinkedList<Node>>();
-		
+	private void discoverAgentPlans(StrategyType strategyType, SearchClient client) {
 		for (int agentNo = 0; agentNo < agentCount; agentNo++) {
 			Strategy strategy = createStrategy(strategyType, client);
 			
 			Node copy = this.initialState.copyOfNode();
 			
-			copy.agentsActions = generateHLAPlan(getAgentObject(agentNo));
+			copy.plannedActions = generateHLAPlan(getAgentObject(agentNo));
 			
-			System.err.println("HLA plan for agent " + agentNo + ": " + copy.agentsActions);
+			System.err.println("HLA plan for agent " + agentNo + ": " + copy.plannedActions);
 			
 			copy.agentNo = agentNo;
 			copy.strategy = strategy;
@@ -268,26 +267,8 @@ public class SearchClient {
 			
 			copy.relaxNode();
 			
-			strategy.addToFrontier(copy);
-			
-			LinkedList<Node> planForAgent = searchForAgent(strategy, agentNo);
-			
-			agentPlans.put(agentNo, planForAgent);
-			
-			if(planForAgent != null) {
-				System.err.println("Solution found for agent " + agentNo + ":");
-				for(Node n : planForAgent) {
-					System.err.println(n.toString());
-				}
-			}
-
+			agentBeliefs.put(agentNo, copy);			
 		}
-
-		return agentPlans;
-	}
-	
-	private void plan(int agentNo, StrategyType strategyType, SearchClient client){
-		
 	}
 	
 	/**
@@ -531,15 +512,15 @@ public class SearchClient {
 		}
 	}
 
-	public LinkedList<String> search(StrategyType strategyType, SearchClient client) throws IOException {
+	public void init(StrategyType strategyType, SearchClient client) throws IOException {
 		System.err.format("Search starting with strategy %s.\n", strategyType);
 		
 		createGoalBoxRelationship();
 		createBoxAgentRelationship();
 		
-		HashMap<Integer, LinkedList<Node>> agentPlans = discoverAgentPlans(strategyType, client);
+		discoverAgentPlans(strategyType, client);
 
-		System.err.println("Planning finished for all agents.");
+//		System.err.println("Planning finished for all agents.");
 		
 //		// Sending joint actions to server for both SA and MA levels
 //		LinkedList<String> jointActions = resolveConflicts(agentPlans);
@@ -550,9 +531,30 @@ public class SearchClient {
 		
 		//return agentPlans;
 		
-		return formJointActions(agentPlans);
+		//return formJointActions(agentPlans);
 		
 		
+	}
+
+	public void planNextHLA(SearchClient client, HashMap<Integer, LinkedList<Node>> agentPlans, int agentNo) {
+		Node n = agentBeliefs.get(agentNo);
+		
+		n.addPlannedAction();
+		
+		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
+		
+		LinkedList<Node> planForAgent = searchForAgent(n.strategy, agentNo);
+		
+		agentPlans.put(agentNo, planForAgent);
+		
+		if(planForAgent != null) {
+			System.err.println("Solution found for agent " + agentNo + ":");
+			for(Node node : planForAgent) {
+				System.err.println(node.toString());
+			}
+		}
+		
+		n.strategy.clearFrontier();
 	}
 	
 	public LinkedList<String> formJointActions(HashMap<Integer, LinkedList<Node>> listOfActions) {
@@ -635,7 +637,7 @@ public class SearchClient {
 
 			Node leafNode = strategy.getAndRemoveLeaf();
 			
-			if (leafNode.isGoalState()) {
+			if (leafNode.isGoalState()) {	// This needs to be fixed by having proper checks.
 				return leafNode.extractPlan();
 			}
 
@@ -648,6 +650,25 @@ public class SearchClient {
 			}
 			iterations++;
 		}
+	}
+	
+	public String formNextJointAction(HashMap<Integer, LinkedList<Node>> agentPlans) {
+		String jointAction = "[";
+		for(int agentNo = 0; agentNo < agentCount; agentNo++) {
+			LinkedList<Node> curPlan = agentPlans.get(agentNo);
+			if(!curPlan.isEmpty()) {
+				jointAction += curPlan.remove(0).action.toString();
+			}
+			else {
+				jointAction += "NoOp";
+			}
+			if(agentNo != agentCount - 1) {
+				jointAction += ",";
+			}
+		}
+		jointAction += "]";
+		
+		return jointAction;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -741,28 +762,74 @@ public class SearchClient {
         }
         */
         
-		LinkedList<String> solution;
+        
+        HashMap<Integer, LinkedList<Node>> agentPlans = new HashMap<Integer, LinkedList<Node>>();
+        
 		try {
-			solution = client.search(strategyType, client);
+			client.init(strategyType, client);
 		} catch (OutOfMemoryError ex) {
 			System.err.println("Maximum memory usage exceeded.");
-			solution = null;
 		}
-
-		if (solution == null) {
-			System.err.println("Unable to solve level.");
-			System.exit(0);
-		} else {
-			System.err.println("A solution has been found.");
-			
-			for (String s : solution) {
-				System.out.println(s);
-				String response = serverMessages.readLine();
-				/*if (response.contains("false")) {
-					System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
-					break;
-				}*/
+		
+		for(int agentNo = 0; agentNo < agentCount; agentNo++) {
+			client.planNextHLA(client, agentPlans, agentNo);
+		}
+		
+		List<HighLevelAction> hlaPlan = client.agentBeliefs.get(0).plannedActions;
+		for(int step = 0; step < hlaPlan.size(); step++) {
+			System.err.print(hlaPlan.get(step).toString());
+		}
+		System.err.println();
+		
+		LinkedList<Node> agentPlan = agentPlans.get(0);
+		for(int step = 0; step < agentPlan.size(); step++) {
+			System.err.print(agentPlan.get(step).action.toString() + ",");
+		}
+		System.err.println();
+		
+		while(true) {
+			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
+				if(agentPlans.get(agentNo).isEmpty()) {
+					System.err.println(client.agentBeliefs.get(agentNo).action);
+					client.planNextHLA(client, agentPlans, agentNo);
+				}
 			}
+			
+			String jointAction = client.formNextJointAction(agentPlans);
+			
+			System.out.println(jointAction);
+			String response = serverMessages.readLine();
+			
+			if (response.contains("false")) {
+				System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, jointAction);
+			}
+			
+			int noOfEmptyPlans = 0;
+			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
+				if(client.agentBeliefs.get(agentNo).plannedActions.isEmpty() && agentPlans.get(agentNo).isEmpty()) {
+					noOfEmptyPlans += 1;
+				}
+			}
+			
+			if(noOfEmptyPlans == agentCount) {
+				break;
+			}
+			
+//			if (solution == null) {
+//				System.err.println("Unable to solve level.");
+//				System.exit(0);
+//			} else {
+//				System.err.println("A solution has been found.");
+//				
+//				for (String s : solution) {
+//					System.out.println(s);
+//					String response = serverMessages.readLine();
+//					/*if (response.contains("false")) {
+//						System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
+//						break;
+//					}*/
+//				}
+//			}
 		}
 	}
 }
