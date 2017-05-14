@@ -18,6 +18,13 @@ public class DistanceBFS {
 	
 	char boxChar;
 	
+	/**
+ 	 * Representation of a final position; The array is expected to have 2 values, [0] to represent rows, [1] to represent cols.
+ 	 * Used during computation in mode 3.
+ 	 */
+ 	int[] destination;
+	 	
+	
 	ArrayDeque<int[]> queue = new ArrayDeque<int[]>();
 	
 	public static enum Direction {
@@ -46,10 +53,26 @@ public class DistanceBFS {
 		}
 	}
 	
+	/**
+ 	 * Finds a distance between [x1, y1] and [x2, y2] or returns -1 if there is no path.
+ 	 * @param x1
+ 	 * @param y1
+ 	 * @param x2
+ 	 * @param y2
+ 	 * @return
+ 	 */
+ 	public int distance(int x1, int y1, int x2, int y2) {
+ 		init(x1, y1);
+ 		
+ 		destination = new int[] { x2, y2 };
+ 		
+ 		return performSearch(null, null, null, 3);
+ 	}
+	
 	public int closestBoxFromGoal(int startRow, int startCol, char goalChar){
 		init(startRow, startCol);
 		
-		this.boxChar =  java.lang.Character.toUpperCase(goalChar);
+		this.boxChar = java.lang.Character.toUpperCase(goalChar);
 		
 		return performSearch(null, null, null, 0);
 		
@@ -132,6 +155,12 @@ public class DistanceBFS {
 					return dist;
 				}
 				break;
+			case 3:
+ 				// Mode for generalized problem of searching path between two locations
+ 				if (destination[0] == row && destination[1] == col) {
+ 					return dist;
+ 				}
+ 				break;
 		}
 		
 		dist += 1;
@@ -143,7 +172,7 @@ public class DistanceBFS {
 		return -1;
 	}
 	
-	/*
+	/**
 	 * This method contains conditions to continue the BFS and has several modes for the different cases.
 	 * The current row, and column
 	 * @param row
@@ -188,6 +217,9 @@ public class DistanceBFS {
 				if(otherAgentsPlan[row][col] && !differentColoredAgentInCell(row, col, boxColor)) {	// Checks whether the cell is in a critical section. PROBLEM: Never adds the free cell!!!
 					queue.add(createPosDistArray(row,col, dist));
 				}
+				break;
+			case 3:
+				queue.add(createPosDistArray(row, col, dist));
 				
 			}
 			copyOfLevelToSearch[row][col] = '!';	// This marks that the cell has already been considered

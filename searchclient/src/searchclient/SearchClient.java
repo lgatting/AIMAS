@@ -497,13 +497,32 @@ public class SearchClient {
 	 * All goals will be assigned some distinct box and no two goals will be assigned the same box.
 	 */
 	private void createGoalBoxRelationship() {
-		for (Goal goal : discoveredGoals) {
-			for (Box box : discoveredBoxes) {
+		int bestDist = Integer.MAX_VALUE;
+		Goal bestGoal = null;
+		
+		for (Box box : discoveredBoxes) {
+			int[] boxPos = Utils.findBoxPosition(box, this.initialState.boxIds);
+
+			for (Goal goal : discoveredGoals) {
+				int[] goalPos = Utils.findGoalPosition(goal, this.initialState.goalIds);
+				
 				if (box.goal == null && box.letter == goal.letter) {
-					box.goal = goal;
-					break;
+					int pathLength = (new DistanceBFS(this.initialState)).distance(goalPos[0], goalPos[1], boxPos[0], boxPos[1]);
+
+					if (pathLength != -1 && pathLength < bestDist) {
+						bestDist = pathLength;
+						bestGoal = goal;
+					}
 				}
 			}
+			
+			box.goal = bestGoal;
+			
+			bestGoal = null;
+			bestDist = Integer.MAX_VALUE;
+			
+			if (box.letter == 'h')
+				System.err.println("H:" + box.goal);
 		}
 	}
 	
@@ -660,7 +679,7 @@ public class SearchClient {
 
 			Node leafNode = strategy.getAndRemoveLeaf();
 			
-			if (leafNode.isGoalState()) {	// This needs to be fixed by having proper checks.
+			if (leafNode.isGoalState()) {
 				return leafNode.extractPlan();
 			}
 
@@ -694,10 +713,6 @@ public class SearchClient {
 		jointAction += "]";
 		
 		return jointAction;
-	}
-	
-	public void updateBoxAndAgentPerception(String action, int agentNo) {
-		
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -736,8 +751,6 @@ public class SearchClient {
         	strategyType = StrategyType.bfs;
             System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
         }
-        
-        
         
         /*
         HashMap<Integer, Belief> beliefs;	// HasMaps may not be necessary if the below agent control is made into an object.
