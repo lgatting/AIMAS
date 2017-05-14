@@ -155,8 +155,6 @@ public class Node {
 			// Agent has satisfied all his actions; check HLAs and if none of them is broken, then consider
 			// the goal state to be reached
 			
-			
-			
 			//checkHLAs();
 			
 			//System.err.println(this);

@@ -23,7 +23,7 @@ public class DistanceBFS {
  	 * Used during computation in mode 3.
  	 */
  	int[] destination;
-	 	
+
 	
 	ArrayDeque<int[]> queue = new ArrayDeque<int[]>();
 	
@@ -156,11 +156,11 @@ public class DistanceBFS {
 				}
 				break;
 			case 3:
- 				// Mode for generalized problem of searching path between two locations
- 				if (destination[0] == row && destination[1] == col) {
- 					return dist;
- 				}
- 				break;
+				// Mode for generalized problem of searching path between two locations
+				if (destination[0] == row && destination[1] == col) {
+					return dist;
+				}
+				break;
 		}
 		
 		dist += 1;
