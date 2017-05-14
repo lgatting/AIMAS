@@ -151,4 +151,5 @@ public class Perception {
 		}
 		return "Invalid direction";
 	}
+	
 }

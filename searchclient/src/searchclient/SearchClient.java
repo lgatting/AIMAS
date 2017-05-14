@@ -555,16 +555,27 @@ public class SearchClient {
 		
 		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
 		
+		System.err.println("Level:\n" + n);
+		
+		System.err.println(n.curAction);
+		
+		for(int row = 0; row < n.rows; row++) {
+			for(int col = 0; col < n.cols; col++) {
+				System.err.print(n.goalIds[row][col]);
+			}
+			System.err.println();
+		}
+		
 		LinkedList<Node> planForAgent = searchForAgent(n.strategy, agentNo);
 		
 		agentPlans.put(agentNo, planForAgent);
 		
-		if(planForAgent != null) {
-			System.err.println("Solution found for agent " + agentNo + ":");
-			for(Node node : planForAgent) {
-				System.err.println(node.toString());
-			}
-		}
+//		if(planForAgent != null) {
+//			System.err.println("Solution found for agent " + agentNo + ":");
+//			for(Node node : planForAgent) {
+//				System.err.println(node.toString());
+//			}
+//		}
 		
 		n.strategy.clearFrontier();
 	}
@@ -821,7 +832,7 @@ public class SearchClient {
 			System.out.println(jointAction);
 			String response = serverMessages.readLine();
 			
-			System.err.println(jointAction);
+			System.err.println("Action:" + jointAction);
 			System.err.println("Response:" + response);
 			boolean[] parsedResponse = responsePar.parseResponse(response);
 			
