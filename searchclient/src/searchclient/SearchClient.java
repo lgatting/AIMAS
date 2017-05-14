@@ -43,7 +43,11 @@ public class SearchClient {
 	private Set<Box> discoveredBoxes;
 	private Set<Agent> discoveredAgents;
 	
+	public Perception perception;
+	
 	public HashMap<Integer, Node> agentBeliefs = new HashMap<Integer, Node>();
+	
+	public String[] agentsAction;	// An array of the agents' next actions
 	
 	public static enum StrategyType {
 		bfs, dfs, astar, wastar, greedy
@@ -184,6 +188,12 @@ public class SearchClient {
 			row++;
 		}
 		this.initialState.setcolormap(colorAssignments);
+		
+		agentsAction = new String[agentCount];
+		
+		// The below creates an initial perception of the level that will be used to update each agent's perception of the level.
+		this.perception = new Perception(this.initialState.rows, this.initialState.cols, this.initialState.agentCount,
+										 this.initialState.boxes, this.initialState.boxIds, this.initialState.agents);
 	}
 	
 	/**
@@ -541,6 +551,8 @@ public class SearchClient {
 		
 		n.addPlannedAction();
 		
+		n.updatePerception(perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
+		
 		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
 		
 		LinkedList<Node> planForAgent = searchForAgent(n.strategy, agentNo);
@@ -657,9 +669,11 @@ public class SearchClient {
 		for(int agentNo = 0; agentNo < agentCount; agentNo++) {
 			LinkedList<Node> curPlan = agentPlans.get(agentNo);
 			if(!curPlan.isEmpty()) {
-				jointAction += curPlan.remove(0).action.toString();
+				agentsAction[agentNo] = curPlan.remove(0).action.toString();
+				jointAction += agentsAction[agentNo];
 			}
 			else {
+				agentsAction[agentNo] = "NoOp";
 				jointAction += "NoOp";
 			}
 			if(agentNo != agentCount - 1) {
@@ -669,6 +683,10 @@ public class SearchClient {
 		jointAction += "]";
 		
 		return jointAction;
+	}
+	
+	public void updateBoxAndAgentPerception(String action, int agentNo) {
+		
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -787,6 +805,9 @@ public class SearchClient {
 		}
 		System.err.println();
 		
+		ResponseParser responsePar = new ResponseParser(agentCount);
+		serverMessages.readLine(); // This is called to ignore the initial server message
+		
 		while(true) {
 			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
 				if(agentPlans.get(agentNo).isEmpty()) {
@@ -800,8 +821,17 @@ public class SearchClient {
 			System.out.println(jointAction);
 			String response = serverMessages.readLine();
 			
-			if (response.contains("false")) {
-				System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, jointAction);
+			System.err.println(jointAction);
+			System.err.println("Response:" + response);
+			boolean[] parsedResponse = responsePar.parseResponse(response);
+			
+			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
+				if(parsedResponse[agentNo]) {
+					client.perception.update(client.agentsAction[agentNo], agentNo);
+				}
+				else {
+					System.err.format("Server responsed with %s to the inapplicable action of agent %s: %s\n", false, agentNo, client.agentsAction[agentNo]);
+				}
 			}
 			
 			int noOfEmptyPlans = 0;

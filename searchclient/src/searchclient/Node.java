@@ -16,6 +16,7 @@ import searchclient.Command.Type;
 import searchclient.ElementWithColor.Color;
 import models.GoToHLA;
 import models.HighLevelAction;
+import models.Perception;
 import models.SatisfyGoalHLA;
 
 public class Node {
@@ -184,7 +185,6 @@ public class Node {
 		
 		return goalCount - satisfiedGoals;
 	}
-	
 
 	public boolean sameColorAsAgent(int agent, char box) {
 		Color agentColor = colorAssignments.get((char) (agent  + '0'));
@@ -444,6 +444,16 @@ public class Node {
 		}
 	}
 
+	public void updatePerception(Perception p) {
+		for (int row = 0; row < this.rows; row++) {
+			System.arraycopy(p.boxes[row], 0, this.boxes[row], 0, this.cols);
+			System.arraycopy(p.boxIds[row], 0, this.boxIds[row], 0, this.cols);
+		}
+		for (int agent = 0; agent < this.agentCount; agent++) {
+			System.arraycopy(p.agents[agent], 0, this.agents[agent], 0, 2);
+		}
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder s = new StringBuilder();
