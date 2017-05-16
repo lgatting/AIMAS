@@ -229,7 +229,7 @@ public class SearchClient {
 		Collections.reverse(orderedBoxes);
 		
 		for (Box box : orderedBoxes) {
-			System.err.println("ADDED");
+			//System.err.println("ADDED");
 			plan.add(new GoToHLA(box));
 			plan.add(new SatisfyGoalHLA(box, box.goal));
 		}

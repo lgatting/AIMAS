@@ -179,6 +179,7 @@ public class DistanceBFS {
 			case 4:
 				// Mode for generalized problem of searching path between two locations
 				if (destination[0] == row && destination[1] == col) {
+//					System.err.println("Return dist:" + dist);
 					return dist;
 				}
 				break;
@@ -243,24 +244,25 @@ public class DistanceBFS {
 					queue.add(createPosDistArray(row, col, dist));
 					break;
 				case 4:
-					if(copyOfLevelToSearch[row][col] == '?'){
+					if(copyOfLevelToSearch[row][col] == '?' || (row == destination[0] && col == destination[1])){
 						queue.add(createPosDistArray(row, col, dist));
+//						System.err.println(destination[0] + "," + destination[1]);
+//						for(int r = 0; r < rows; r++) {
+//							for(int c = 0; c < cols; c++) {
+//								if(walls[r][c]){
+//									System.err.print("+");
+//								}
+//								else {
+//									System.err.print(copyOfLevelToSearch[r][c]);
+//								}
+//							}
+//							System.err.println();
+//						}
+//						System.err.println();
 					}
 			}
 			copyOfLevelToSearch[row][col] = '!';	// This marks that the cell has already been considered
 			
-//			for(int r = 0; r < rows; r++) {
-//				for(int c = 0; c < cols; c++) {
-//					if(walls[r][c]){
-//						System.err.print("+");
-//					}
-//					else {
-//						System.err.print(copyOfLevelToSearch[r][c]);
-//					}
-//				}
-//				System.err.println();
-//			}
-//			System.err.println();
 		}
 		
 	}
