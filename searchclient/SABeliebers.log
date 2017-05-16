@@ -1,0 +1,39 @@
+blue: 0,A,E,J,K,L,F,B,C,D,G,N,H,I,M
++++++++++++++++++++++++++
++  G                A g +
++ b H         h       B +
++  I     a++++      C i +
++         ++++          +
++ d J     ++++    0 D j +
++  K     c++++k      E  +
++ f L    e++++      F l +
++                       +
++  M                 N  +
++  +++++++++++++++++++  +
++          mn           +
++++++++++++++++++++++++++
+
+[Move(W)];349
+[Move(W)];2
+[Move(W)];1
+[Move(W)];1
+[Move(S)];6
+[Move(S)];1
+[Move(S)];1
+[Move(W)];0
+[Move(W)];0
+[Move(W)];0
+[Move(W)];1
+[Move(W)];1
+[Move(W)];1
+[Move(W)];1
+[Move(W)];1
+[Move(W)];1
+[Move(W)];2
+[Pull(W,N)];2
+f7f9caa007f871dec8a4733d5a901a67eaf8ffd4
+unsuccessful
+371
+18
+21f761267ec83226889543d7f52db07923eef3c8
+1494942001959

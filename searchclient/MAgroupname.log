@@ -1,0 +1,14 @@
+red: 0,A,1,B
+green:2
+yellow: 3, C
+++++++++++++++++++++++++++++
++     b    1    0A B2C  a  +
++                  ++3     +
+++++++++++++++++++++++++++++
+
+31b4cdbecbcf073f278551c265e935deff5a6827
+unsuccessful
+0
+0
+eb411f01d662ae45dbd2f8c2d878dffb354dfe4a
+1494940507641

@@ -45,11 +45,14 @@ public class DistanceBFS {
 			for(int col = 0; col < cols; col++){
 				if(n.boxes[row][col] > 0){
 					levelToSearch[row][col] = n.boxes[row][col];
+//					System.err.print(levelToSearch[row][col]);
 				}
 				else {
 					levelToSearch[row][col] = '?';
+//					System.err.print(levelToSearch[row][col]);
 				}
 			}
+//			System.err.println();
 		}
 	}
 	
@@ -61,12 +64,29 @@ public class DistanceBFS {
  	 * @param y2
  	 * @return
  	 */
- 	public int distance(int x1, int y1, int x2, int y2) {
+	public int distance(int x1, int y1, int x2, int y2) {
  		init(x1, y1);
  		
  		destination = new int[] { x2, y2 };
  		
  		return performSearch(null, null, null, 3);
+ 	}
+	
+	/**
+	 * Finds a distance between [x1, y1] and [x2, y2] or returns -1 if there is no path.
+	 * This method will consider boxes as obstacles.
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @return
+	 */
+ 	public int distance2(int x1, int y1, int x2, int y2) {
+ 		init(x1, y1);
+ 		
+ 		destination = new int[] { x2, y2 };
+ 		
+ 		return performSearch(null, null, null, 4);
  	}
 	
 	public int closestBoxFromGoal(int startRow, int startCol, char goalChar){
@@ -156,6 +176,7 @@ public class DistanceBFS {
 				}
 				break;
 			case 3:
+			case 4:
 				// Mode for generalized problem of searching path between two locations
 				if (destination[0] == row && destination[1] == col) {
 					return dist;
@@ -201,28 +222,45 @@ public class DistanceBFS {
 		
 		if(!walls[row][col] && copyOfLevelToSearch[row][col] != '!'){	// Check whether the new/neighbour cell has not already been explored
 			switch(mode) {
-			case 0:
-				queue.add(createPosDistArray(row, col, dist));	// Explores cells and add them to the queue if the wanted box is not in the current cell
-				break;
-				
-			case 1:
-				if(copyOfLevelToSearch[row][col] >= 'A' && copyOfLevelToSearch[row][col] <= 'Z' &&
-					this.colorAssignments.get(copyOfLevelToSearch[row][col]) != agentColor){	// Check that a box of the same color as the agent is not in the current cell
+				case 0:
+					queue.add(createPosDistArray(row, col, dist));	// Explores cells and add them to the queue if the wanted box is not in the current cell
 					break;
-				}
-				queue.add(createPosDistArray(row,col, dist));
-				break;
-				
-			case 2:
-				if(otherAgentsPlan[row][col] && !differentColoredAgentInCell(row, col, boxColor)) {	// Checks whether the cell is in a critical section. PROBLEM: Never adds the free cell!!!
+					
+				case 1:
+					if(copyOfLevelToSearch[row][col] >= 'A' && copyOfLevelToSearch[row][col] <= 'Z' &&
+						this.colorAssignments.get(copyOfLevelToSearch[row][col]) != agentColor){	// Check that a box of the same color as the agent is not in the current cell
+						break;
+					}
 					queue.add(createPosDistArray(row,col, dist));
-				}
-				break;
-			case 3:
-				queue.add(createPosDistArray(row, col, dist));
-				
+					break;
+					
+				case 2:
+					if(otherAgentsPlan[row][col] && !differentColoredAgentInCell(row, col, boxColor)) {	// Checks whether the cell is in a critical section. PROBLEM: Never adds the free cell!!!
+						queue.add(createPosDistArray(row,col, dist));
+					}
+					break;
+				case 3:
+					queue.add(createPosDistArray(row, col, dist));
+					break;
+				case 4:
+					if(copyOfLevelToSearch[row][col] == '?'){
+						queue.add(createPosDistArray(row, col, dist));
+					}
 			}
 			copyOfLevelToSearch[row][col] = '!';	// This marks that the cell has already been considered
+			
+//			for(int r = 0; r < rows; r++) {
+//				for(int c = 0; c < cols; c++) {
+//					if(walls[r][c]){
+//						System.err.print("+");
+//					}
+//					else {
+//						System.err.print(copyOfLevelToSearch[r][c]);
+//					}
+//				}
+//				System.err.println();
+//			}
+//			System.err.println();
 		}
 		
 	}

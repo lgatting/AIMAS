@@ -229,6 +229,7 @@ public class SearchClient {
 		Collections.reverse(orderedBoxes);
 		
 		for (Box box : orderedBoxes) {
+			System.err.println("ADDED");
 			plan.add(new GoToHLA(box));
 			plan.add(new SatisfyGoalHLA(box, box.goal));
 		}
@@ -574,16 +575,16 @@ public class SearchClient {
 		
 		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
 		
-		System.err.println("Level:\n" + n);
+		//System.err.println("Level:\n" + n);
 		
 		System.err.println(n.curAction);
 		
-		for(int row = 0; row < n.rows; row++) {
-			for(int col = 0; col < n.cols; col++) {
-				System.err.print(n.goalIds[row][col]);
-			}
-			System.err.println();
-		}
+//		for(int row = 0; row < n.rows; row++) {
+//			for(int col = 0; col < n.cols; col++) {
+//				System.err.print(n.goalIds[row][col]);
+//			}
+//			System.err.println();
+//		}
 		
 		LinkedList<Node> planForAgent = searchForAgent(n.strategy, agentNo);
 		

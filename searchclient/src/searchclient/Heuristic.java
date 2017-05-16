@@ -112,10 +112,18 @@ public abstract class Heuristic implements Comparator<Node> {
 						// We now have found both the agent and the box; 
 						// Calculate the distance between them
 
-						int w = Math.abs(agentRow - boxRow);
-						int h = Math.abs(agentCol - boxCol);
-
-						double dist = Math.sqrt(w*w + h*h);
+//						int w = Math.abs(agentRow - boxRow);
+//						int h = Math.abs(agentCol - boxCol);
+//
+//						double dist = Math.sqrt(w*w + h*h);
+						
+						DistanceBFS dbfs = new DistanceBFS(n);
+						
+						int dist = dbfs.distance(agentRow, agentCol, boxRow, boxCol);
+						
+//						if(dist == -1) {
+//							System.err.println("No path from agent at (" + agentRow + "," + agentCol + ") to box at (" + boxRow + "," + boxCol + ")");
+//						}
 						
 						int cost = (int)Math.round(dist * precision);
 						
@@ -186,13 +194,22 @@ public abstract class Heuristic implements Comparator<Node> {
 						// We now have found both the agent and the box; 
 						// Calculate the distance between them
 
-						int w = Math.abs(goalRow - boxRow);
-						int h = Math.abs(goalCol - boxCol);
-
-						double distBG = Math.sqrt(w*w + h*h);
+//						int w = Math.abs(goalRow - boxRow);
+//						int h = Math.abs(goalCol - boxCol);
+//
+//						double distBG = Math.sqrt(w*w + h*h);
 						
-						w = Math.abs(agentRow - boxRow);
-						h = Math.abs(agentCol - boxCol);
+						DistanceBFS dbfs = new DistanceBFS(n);
+						
+						int distBG = dbfs.distance(boxRow, boxCol, goalRow, goalCol);
+						//System.err.println("distBG: " + distBG);
+						
+//						if(distBG == -1) {
+//							System.err.println("No path from box at (" + boxRow + "," + boxCol + ") to goal at (" + goalRow + "," + goalCol + ")");
+//						}
+						
+						int w = Math.abs(agentRow - boxRow);
+						int h = Math.abs(agentCol - boxCol);
 						
 						double distAB = Math.sqrt(w*w + h*h);
 						
