@@ -501,11 +501,17 @@ public class SearchClient {
 		int bestDist = Integer.MAX_VALUE;
 		Goal bestGoal = null;
 		
+		Set<Goal> assignedGoals = new HashSet<Goal>();
+		
 		for (Box box : discoveredBoxes) {
 			int[] boxPos = Utils.findBoxPosition(box, this.initialState.boxIds);
 
 			for (Goal goal : discoveredGoals) {
 				int[] goalPos = Utils.findGoalPosition(goal, this.initialState.goalIds);
+				
+				// This goal has already been assigned; skip this goal
+				if (assignedGoals.contains(goal))
+					break;
 				
 				if (box.goal == null && box.letter == goal.letter) {
 					int pathLength = (new DistanceBFS(this.initialState)).distance(goalPos[0], goalPos[1], boxPos[0], boxPos[1]);
@@ -519,11 +525,10 @@ public class SearchClient {
 			
 			box.goal = bestGoal;
 			
+			assignedGoals.add(bestGoal);
+			
 			bestGoal = null;
 			bestDist = Integer.MAX_VALUE;
-			
-			if (box.letter == 'h')
-				System.err.println("H:" + box.goal);
 		}
 	}
 	
