@@ -209,7 +209,6 @@ public class SearchClient {
 		for (Box box : agent.boxes) {
 			orderedBoxes.add(box);
 		}
-		
 		DeadEndCorridorSolverV2 decsv2 = new DeadEndCorridorSolverV2(discoveredGoals, initialState);
 		List<Goal> orderedGoals = decsv2.orderGoals();
 		
@@ -218,8 +217,8 @@ public class SearchClient {
 		Lewis l = new Lewis(discoveredGoals, initialState);
 		l.solve();
 		
-		PositionPenalizer pp = new PositionPenalizer(discoveredGoals, initialState);
-		pp.solve();
+		//PositionPenalizer pp = new PositionPenalizer(discoveredGoals, initialState);
+		//pp.solve();
 		
 		System.err.println("Discovered order of goals using corridor solver: " + orderedGoals);
 		
@@ -511,7 +510,7 @@ public class SearchClient {
 				
 				// This goal has already been assigned; skip this goal
 				if (assignedGoals.contains(goal))
-					break;
+					continue;
 				
 				if (box.goal == null && box.letter == goal.letter) {
 					int pathLength = (new DistanceBFS(this.initialState)).distance(goalPos[0], goalPos[1], boxPos[0], boxPos[1]);

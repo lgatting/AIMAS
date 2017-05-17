@@ -24,12 +24,14 @@ public class DeadEndCorridorSolverV2 {
 	private int[][] dependancyMatrix;
 	private Node node;
 	private Set<Goal> goals;
+	private Set<Goal> resolvedOnce;
 
 	public DeadEndCorridorSolverV2(Set<Goal> goals, Node n) {
 		frontier = new ArrayList<Goal>();
 		numberedGoals = new ArrayList<Goal>();
 		priorities = new HashMap<Integer, Goal>();
 		dependancyMatrix = new int[goals.size()][goals.size()];
+		resolvedOnce = new HashSet<Goal>();
 		node = n;
 		this.goals = goals;
 	}
@@ -118,11 +120,15 @@ public class DeadEndCorridorSolverV2 {
 		
 		for (int i = 0; i < dependancyMatrix[g.id - 1].length; i++) {
 			if (dependancyMatrix[g.id - 1][i] == 1) {
-				g.numberOfDependencies++;
+				if (!resolvedOnce.contains(g)) {
+					g.numberOfDependencies++;
 				
-				Goal dependant = Utils.findGoal(goals, i + 1);
+					Goal dependant = Utils.findGoal(goals, i + 1);
 
-				g.numberOfDependencies += dependant.numberOfDependencies;
+					g.numberOfDependencies += calculateNumberOfDependencies(dependant);
+					
+					resolvedOnce.add(g);
+				}
 			}
 		}
 		
