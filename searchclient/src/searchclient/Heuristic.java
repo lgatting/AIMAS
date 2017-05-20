@@ -221,11 +221,11 @@ public abstract class Heuristic implements Comparator<Node> {
 			
 			int dist = dbfs.distance(agentRow, agentCol, action.cell[0], action.cell[1]);
 
-			System.err.println("dist: " + dist);
-			System.err.println("agentRow: " + agentRow);
-			System.err.println("agentCol: " + agentCol);
-			System.err.println("cell[0]: " + action.cell[0]);
-			System.err.println("cell[1]: " + action.cell[1]);
+//			System.err.println("dist: " + dist);
+//			System.err.println("agentRow: " + agentRow);
+//			System.err.println("agentCol: " + agentCol);
+//			System.err.println("cell[0]: " + action.cell[0]);
+//			System.err.println("cell[1]: " + action.cell[1]);
 			//System.exit(1);
 			
 			int cost = (int)Math.round(dist * precision);

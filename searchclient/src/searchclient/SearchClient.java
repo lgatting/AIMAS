@@ -385,19 +385,13 @@ public class SearchClient {
 	public void planNextHLA(SearchClient client, HashMap<Integer, LinkedList<Node>> agentPlans, int agentNo) {
 		Node n = agentBeliefs.get(agentNo);
 		
-		System.err.println("Agent 0 pos: (" + client.perception.agents[agentNo][0] + "," + client.perception.agents[agentNo][1] + ")");
+//		System.err.println("Agent 0 pos: (" + client.perception.agents[agentNo][0] + "," + client.perception.agents[agentNo][1] + ")");
 		
 		n.addPlannedAction();
 		
 		n.updatePerception(perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
 		
-		System.err.println("2. Agent 0 pos: (" + client.perception.agents[agentNo][0] + "," + client.perception.agents[agentNo][1] + ")");
-		
-		System.err.println("Frontier is empty: " + n.strategy.frontierIsEmpty());
-		
 		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
-		
-		//System.err.println("Level:\n" + n);
 		
 		System.err.println(n.curAction);
 		
@@ -506,13 +500,13 @@ public class SearchClient {
 				return leafNode.extractPlan();
 			}
 			
-			System.err.println("Agent 0 pos: (" + leafNode.agents[agentNo][0] + "," + leafNode.agents[agentNo][1] + ")");
+//			System.err.println("Agent 0 pos: (" + leafNode.agents[agentNo][0] + "," + leafNode.agents[agentNo][1] + ")");
 			
 			
 			strategy.addToExplored(leafNode);
 			
 			for (Node n : leafNode.getExpandedNodes(agentNo)) { // The list of expanded nodes is shuffled randomly; see Node.java.
-				System.err.println("3. Agent 0 pos: (" + n.agents[agentNo][0] + "," + n.agents[agentNo][1] + ")");
+//				System.err.println("3. Agent 0 pos: (" + n.agents[agentNo][0] + "," + n.agents[agentNo][1] + ")");
 				if (!strategy.isExplored(n) && !strategy.inFrontier(n)) {
 					strategy.addToFrontier(n);
 				}
@@ -707,23 +701,23 @@ public class SearchClient {
 					
 					n.updatePerception(client.perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
 					
-					System.err.println("Agent 0 pos: (" + client.perception.agents[nopriorityagent][0] + "," + client.perception.agents[nopriorityagent][1] + ")");
+//					System.err.println("Agent 0 pos: (" + client.perception.agents[nopriorityagent][0] + "," + client.perception.agents[nopriorityagent][1] + ")");
 					
 					BFS cbfs = new BFS(n);
 					int[] freeCellPos = cbfs.searchForFreeCell(nopriorityagent, prioritizedagent, n, agentPlans);
-					System.err.println("found cell is null:" + freeCellPos[0]);
-					System.err.println("found cell is null:" + freeCellPos[1]);
+//					System.err.println("found cell is null:" + freeCellPos[0]);
+//					System.err.println("found cell is null:" + freeCellPos[1]);
 					
 					GiveWayHLA gwhla = new GiveWayHLA(freeCellPos[0], freeCellPos[1]);
 					
 					
-					System.err.println("Planned Actions size:" + n.plannedActions.size());
+//					System.err.println("Planned Actions size:" + n.plannedActions.size());
 					n.plannedActions.add(0, gwhla);
 					n.plannedActions.add(1, n.curAction);
-					System.err.println("Planned Actions size:" + n.plannedActions.size());
-					System.err.println("Agent 0 pos: (" + client.perception.agents[nopriorityagent][0] + "," + client.perception.agents[nopriorityagent][1] + ")");
+//					System.err.println("Planned Actions size:" + n.plannedActions.size());
+//					System.err.println("Agent 0 pos: (" + client.perception.agents[nopriorityagent][0] + "," + client.perception.agents[nopriorityagent][1] + ")");
 					agentPlans.get(nopriorityagent).clear();
-					System.err.println("Planned Actions size:" + n.plannedActions.size());
+//					System.err.println("Planned Actions size:" + n.plannedActions.size());
 					client.planNextHLA(client, agentPlans, nopriorityagent);
 					
 					trials[i] = 0;
