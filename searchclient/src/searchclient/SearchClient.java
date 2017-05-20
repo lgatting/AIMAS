@@ -273,9 +273,9 @@ public class SearchClient {
 			copy.agentNo = agentNo;
 			copy.strategy = strategy;
 			
-			System.err.println("Creating a relaxed plan for agent " + agentNo);
+//			System.err.println("Creating a relaxed plan for agent " + agentNo);
 			
-			copy.relaxNode();
+//			copy.relaxNode();
 			
 			agentBeliefs.put(agentNo, copy);			
 		}
@@ -382,14 +382,25 @@ public class SearchClient {
 		
 	}
 
-	public void planNextHLA(SearchClient client, HashMap<Integer, LinkedList<Node>> agentPlans, int agentNo) {
+	public void planNextHLA(SearchClient client, HashMap<Integer, LinkedList<Node>> agentPlans, int agentNo, boolean relaxPlan) {
 		Node n = agentBeliefs.get(agentNo);
 		
 //		System.err.println("Agent 0 pos: (" + client.perception.agents[agentNo][0] + "," + client.perception.agents[agentNo][1] + ")");
 		
-		n.addPlannedAction();
+		n.updateCurActionWithHeadOfPlannedActions();
 		
 		n.updatePerception(perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
+		
+		System.err.println("Before Relaxation for agent: " + agentNo);
+		Utils.printArray(n.boxes, n.rows, n.cols);
+		
+		if(relaxPlan) {
+			n.relaxNode();
+		}
+		
+		
+		System.err.println("After Relaxation for agent: " + agentNo);
+		Utils.printArray(n.boxes, n.rows, n.cols);
 		
 		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
 		
@@ -403,7 +414,7 @@ public class SearchClient {
 //		}
 		
 		LinkedList<Node> planForAgent = searchForAgent(n.strategy, agentNo);
-		
+		System.err.println("Search for agent " + agentNo + " completed!");
 		agentPlans.put(agentNo, planForAgent);
 		
 //		if(planForAgent != null) {
@@ -489,12 +500,14 @@ public class SearchClient {
 				iterations = 0;
 			}
             
-
 			if (strategy.frontierIsEmpty()) {
 				return null;
 			}
-
+			
 			Node leafNode = strategy.getAndRemoveLeaf();
+			
+			System.err.println(leafNode.curAction);
+			System.err.println(leafNode);
 			
 			if (leafNode.isGoalState()) {
 				return leafNode.extractPlan();
@@ -645,7 +658,17 @@ public class SearchClient {
 		}
 		
 		for(int agentNo = 0; agentNo < agentCount; agentNo++) {
-			client.planNextHLA(client, agentPlans, agentNo);
+			client.planNextHLA(client, agentPlans, agentNo, false);
+			if(agentPlans.get(agentNo) == null) {
+				System.err.println("Creating a relaxed plan for: " + agentNo);
+				client.planNextHLA(client, agentPlans, agentNo, true);
+				if(agentPlans.get(agentNo) != null) {
+					client.agentBeliefs.get(agentNo).removeHeadOfPlannedActions();
+				}
+			}
+			else {
+				client.agentBeliefs.get(agentNo).removeHeadOfPlannedActions();
+			}
 		}
 		
 		List<HighLevelAction> hlaPlan = client.agentBeliefs.get(0).plannedActions;
@@ -670,7 +693,7 @@ public class SearchClient {
 			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
 				if(agentPlans.get(agentNo).isEmpty()) {
 					System.err.println(client.agentBeliefs.get(agentNo).action);
-					client.planNextHLA(client, agentPlans, agentNo);
+					client.planNextHLA(client, agentPlans, agentNo, false);
 				}
 				
 			}
@@ -718,7 +741,7 @@ public class SearchClient {
 //					System.err.println("Agent 0 pos: (" + client.perception.agents[nopriorityagent][0] + "," + client.perception.agents[nopriorityagent][1] + ")");
 					agentPlans.get(nopriorityagent).clear();
 //					System.err.println("Planned Actions size:" + n.plannedActions.size());
-					client.planNextHLA(client, agentPlans, nopriorityagent);
+					client.planNextHLA(client, agentPlans, nopriorityagent, false);
 					
 					trials[i] = 0;
 					flag = false ;

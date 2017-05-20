@@ -573,7 +573,7 @@ public class SearchClientBackup {
 	public void planNextHLA(SearchClientBackup client, HashMap<Integer, LinkedList<Node>> agentPlans, int agentNo) {
 		Node n = agentBeliefs.get(agentNo);
 		
-		n.addPlannedAction();
+		n.updateCurActionWithHeadOfPlannedActions();
 		
 		n.updatePerception(perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
 		

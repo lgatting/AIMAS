@@ -73,7 +73,7 @@ public class Node {
 	/**
 	 * HLAs that have already been executed executed.
 	 */
-	public List<HighLevelAction> pastActions;
+	public List<HighLevelAction> completedPastActions;
 	
 	public HashMap<Character, Color> colorAssignments;
 
@@ -108,7 +108,7 @@ public class Node {
 		
 		this.plannedActions = new ArrayList<HighLevelAction>();
 		this.curAction = null;
-		this.pastActions = new ArrayList<HighLevelAction>();
+		this.completedPastActions = new ArrayList<HighLevelAction>();
 		
 		this.rows = rows;
 		this.cols = cols;
@@ -137,7 +137,7 @@ public class Node {
 				int[] boxPos = Utils.findBoxPosition(((GoToHLA) curAction).box, boxIds);
 				
 				if(Utils.isNeighboringPosition(agentRow, agentCol, boxPos[0], boxPos[1])) {
-					pastActions.add(curAction);
+					completedPastActions.add(curAction);
 					strategy.clearFrontier();
 					System.err.println("Reached box (" + boxes[boxPos[0]][boxPos[1]] + ")");
 					
@@ -299,7 +299,7 @@ public class Node {
 		
 		copy.plannedActions = this.plannedActions;
 		copy.curAction = this.curAction;
-		copy.pastActions = this.pastActions;
+		copy.completedPastActions = this.completedPastActions;
 		
 		for (int row = 0; row < this.rows; row++) {
 			System.arraycopy(this.boxes[row], 0, copy.boxes[row], 0, this.cols);
@@ -445,12 +445,20 @@ public class Node {
 	 * Removes the head of plannedActions and inserts it into curActions.
 	 * The next time search is called, a plan will be returned for the next HLA.
 	 */
-	public void addPlannedAction() {
+	public void updateCurActionWithHeadOfPlannedActions() {
 		if(!plannedActions.isEmpty()) {
-			HighLevelAction hla = plannedActions.remove(0);
+			HighLevelAction hla = plannedActions.get(0);
 			curAction = hla;
 		}
 	}
+	
+	public void removeHeadOfPlannedActions() {
+		if(!plannedActions.isEmpty()) {
+			plannedActions.remove(0);
+		}
+	}
+	
+	
 
 	public void updatePerception(Perception p) {
 		for (int row = 0; row < this.rows; row++) {
