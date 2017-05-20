@@ -302,195 +302,7 @@ public class SearchClient {
 	 * @return An array of strings where each string is a representation of joint action ready to be sent to a server.
 	 */
 	private LinkedList<String> resolveConflicts(HashMap<Integer, LinkedList<Node>> agentPlans) {
-		for(int agent = 0; agent < agentCount; agent++) {	    
-			hmap.put(agent, new  LinkedList<String>()); /// add empty cs linked for each agent
-		}
-		
-		int longestPlanSize = longestPlanSize(agentPlans);
-    
-		/// add route coordinates to corresponding linked list
-	    for(int step = 0; step < longestPlanSize; step++) {
-	    	for(int agent = 0; agent < agentCount; agent++) {
-	    		String newagentpos = "";
-	    		if(step < agentPlans.get(agent).size()){
-	    			int newagentrow = agentPlans.get(agent).get(step).agents[agent][0]; // agent row
-		    		int newagentcol = agentPlans.get(agent).get(step).agents[agent][1]; // agent col
-		    		newagentpos = newagentrow+"-"+newagentcol ;
-	    		}
-	    		else {
-	    			newagentpos = "-" ;
-	    		}
-	    		
-	    		hmap.get(agent).add(newagentpos);
-	    	}
-	    }
-	    
-	    for(int agent = 0; agent < agentCount; agent++) {	    
-			for(int j=0 ; j< hmap.get(0).size() ; j++){
-				//System.err.print(hmap.get(agent).get(j)+", ");
-			}
-			//System.err.println(" ");
-		}
-		
-	    // select pair of routes  
-	    
-		 // for every pair find critical section
-		      // assume we have only one pair
-              // find critical cells
-	             /// implement solution for many critical sections
-	    
-	    
-	    LinkedList<String> criticalcells = new LinkedList<String>();
-	    int usingcs = -1 ;
-	    boolean sharecs = false ;
-	    int sharecsdelay = 0 ;
-	    
-	    // add critical cells to critical section
-	    for(int walker1=0; walker1<hmap.get(0).size();walker1++) {
-	    	for(int walker2=0; walker2<hmap.get(0).size(); walker2++){
-	    		if ((hmap.get(0).get(walker1).equals(hmap.get(1).get(walker2)) && hmap.get(1).get(walker1).equals(hmap.get(0).get(walker2)))
-	    				||  (hmap.get(0).get(walker2).equals(hmap.get(1).get(walker2)))) {
-	    			criticalcells.add(hmap.get(0).get(walker1).toString());
-	    		}
-			   
-    			if(hmap.get(0).get(walker2).equals(hmap.get(1).get(walker2))){
-				   	sharecs = true;
-			  	}
-	    	}
-	    }
-
-		LinkedList<String> jointActions = new LinkedList<String>();
-		boolean readyToleave = false ;
-		int readyincounter = 0;
-		
-		plancounter = new int[agentCount];
-		int[] planssteps = new int[agentCount];
-		
-		/// set all plancounter entries to largestPlanSize
-		for (int i = 0; i < plancounter.length; i++) {
-			plancounter[i] = hmap.get(0).size();
-		}
-		
-		// set all planssteps to 0
-		for (int i = 0; i < planssteps.length; i++) {
-			planssteps[i] = 0;
-		}
-		
-		/*
-		for (int i = 0; i < longestPlanSize; i++) {
-			String jointAction = "[";
-
-			for(int agent = 0; agent < agentCount; agent++) {
-				Node agentPlan;
-				
-				if (agentPlans.get(agent).size() > i)
-					agentPlan = agentPlans.get(agent).get(i);
-				else
-					agentPlan = null;
-				
-				if (agentPlan != null) {
-					jointAction += agentPlan.action;
-				} else {
-					jointAction += "NoOp";
-				}
-				jointAction += ",";
-			}
-			
-			jointAction = jointAction.substring(0, jointAction.length() - 1) + "]";
-			
-	    	jointActions.add(jointAction);
-		}
-		*/
-		
-		int globalc = 0;
-		while (!areAllPlanCounterEntriesNull()) {
-			int actionc = 0;
-			String jointAction = "[";
-			
-			for (int agent = 0; agent < agentCount; agent++) {
-				
-				// get agent pos
-			
-                if(planssteps[agent] >= agentPlans.get(agent).size()){
-                	jointAction += "NoOp";
-                	actionc++;
-	    		} else {
-					int newagentrow = agentPlans.get(agent).get(planssteps[agent]).agents[agent][0]; // agent row
-		    		int newagentcol = agentPlans.get(agent).get(planssteps[agent]).agents[agent][1]; // agent col
-		    		String newagentpos = newagentrow+"-"+newagentcol ;
-		    
-			    	if(sharecsdelay > 5) {
-			    		jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
-		    		    planssteps[agent]++;
-		    		    plancounter[agent]--;
-			    	} else if (criticalcells.getLast().equals(newagentpos) && usingcs==agent) {
-		    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
-		    		    planssteps[agent]++;
-		    		    plancounter[agent]--;
-		    		    readyToleave = true;
-		    			//System.err.print(" agent "+agent+" leaves critical section");
-		    		} else if (criticalcells.getFirst().equals(newagentpos) && usingcs==-1) {
-		    			usingcs = agent ;
-		    			//System.err.print(" agent "+agent+" is in the critical section");
-		    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
-		    			planssteps[agent]++;
-		    			plancounter[agent]--;
-		    		} else if (usingcs==agent) {
-		    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
-		    			planssteps[agent]++;
-			    		plancounter[agent]--;
-		    		} else if (usingcs!=-1 && usingcs!=agent) {
-		    			jointAction += "NoOp";
-		    			actionc++;
-		    		} else {
-		    			jointAction += agentPlans.get(agent).get(planssteps[agent]).action.toString();
-		    			planssteps[agent]++;
-			    		plancounter[agent]--;
-		    		}
-	    		}
-	    		
-	    		if(agent < this.agentCount - 1) {	// Add commas for all cases except the last one.
-	    			jointAction += ",";
-	    		}
-	    		
-	    		if(sharecs){
-	    			sharecsdelay++ ;
-	    		}
-	    		
-	    		
-			}
-			
-			if(readyToleave==true && readyincounter<2){
-				readyincounter++;
-			} else if(readyincounter==2){
-				usingcs = -1 ;
-				readyincounter = 0;
-				readyToleave=false;
-			}
-			
-			if (actionc == agentCount)
-				globalc++;
-			
-			if (globalc == 20)
-				break;
-			
-			jointAction += "]";
-	    	jointActions.add(jointAction);
-		}
-		
-		//print agents route based on their location to be removed
-	    for(int k=0; k<hmap.size(); k++){
-
-	    	for(int j=0; j<hmap.get(k).size() ; j++){
-	    		
-	    		////System.err.print(hmap.get(k).get(j)+", ");
-	    		
-	    	}
-	    	////System.err.println(" ");
-	    	//
-	    }
-	    
-	    return jointActions;
+		return null ;
 	}
 	
 	/**
@@ -513,7 +325,7 @@ public class SearchClient {
 					continue;
 				
 				if (box.goal == null && box.letter == goal.letter) {
-					int pathLength = (new DistanceBFS(this.initialState)).distance(goalPos[0], goalPos[1], boxPos[0], boxPos[1]);
+					int pathLength = (new BFS(this.initialState)).distance(goalPos[0], goalPos[1], boxPos[0], boxPos[1]);
 
 					if (pathLength != -1 && pathLength < bestDist) {
 						bestDist = pathLength;
@@ -573,9 +385,15 @@ public class SearchClient {
 	public void planNextHLA(SearchClient client, HashMap<Integer, LinkedList<Node>> agentPlans, int agentNo) {
 		Node n = agentBeliefs.get(agentNo);
 		
+		System.err.println("Agent 0 pos: (" + client.perception.agents[agentNo][0] + "," + client.perception.agents[agentNo][1] + ")");
+		
 		n.addPlannedAction();
 		
 		n.updatePerception(perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
+		
+		System.err.println("2. Agent 0 pos: (" + client.perception.agents[agentNo][0] + "," + client.perception.agents[agentNo][1] + ")");
+		
+		System.err.println("Frontier is empty: " + n.strategy.frontierIsEmpty());
 		
 		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
 		
@@ -687,10 +505,14 @@ public class SearchClient {
 			if (leafNode.isGoalState()) {
 				return leafNode.extractPlan();
 			}
-
+			
+			System.err.println("Agent 0 pos: (" + leafNode.agents[agentNo][0] + "," + leafNode.agents[agentNo][1] + ")");
+			
+			
 			strategy.addToExplored(leafNode);
 			
 			for (Node n : leafNode.getExpandedNodes(agentNo)) { // The list of expanded nodes is shuffled randomly; see Node.java.
+				System.err.println("3. Agent 0 pos: (" + n.agents[agentNo][0] + "," + n.agents[agentNo][1] + ")");
 				if (!strategy.isExplored(n) && !strategy.inFrontier(n)) {
 					strategy.addToFrontier(n);
 				}
@@ -699,12 +521,15 @@ public class SearchClient {
 		}
 	}
 	
+	
+	
+	
 	public String formNextJointAction(HashMap<Integer, LinkedList<Node>> agentPlans) {
 		String jointAction = "[";
 		for(int agentNo = 0; agentNo < agentCount; agentNo++) {
 			LinkedList<Node> curPlan = agentPlans.get(agentNo);
 			if(!curPlan.isEmpty()) {
-				agentsAction[agentNo] = curPlan.remove(0).action.toString();
+				agentsAction[agentNo] = curPlan.get(0).action.toString();
 				jointAction += agentsAction[agentNo];
 			}
 			else {
@@ -719,7 +544,14 @@ public class SearchClient {
 		
 		return jointAction;
 	}
-
+	
+	public static void RemoveJointAction(HashMap<Integer, LinkedList<Node>> agentPlans,int agentNo){
+		LinkedList<Node> curPlan = agentPlans.get(agentNo);
+		if(!curPlan.isEmpty()) {
+			 curPlan.remove(0);
+		}
+	}
+ 
 	public static void main(String[] args) throws Exception {
 		BufferedReader serverMessages = new BufferedReader(new InputStreamReader(System.in));
 
@@ -837,22 +669,68 @@ public class SearchClient {
 		ResponseParser responsePar = new ResponseParser(agentCount);
 		serverMessages.readLine(); // This is called to ignore the initial server message
 		
+		int[] trials = new int[client.initialState.agentCount];
+		
+		
 		while(true) {
 			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
 				if(agentPlans.get(agentNo).isEmpty()) {
 					System.err.println(client.agentBeliefs.get(agentNo).action);
 					client.planNextHLA(client, agentPlans, agentNo);
 				}
+				
 			}
 			
 			String jointAction = client.formNextJointAction(agentPlans);
+		
 			
 			System.out.println(jointAction);
 			String response = serverMessages.readLine();
 			
+			
+			
 			System.err.println("Action:" + jointAction);
 			System.err.println("Response:" + response);
 			boolean[] parsedResponse = responsePar.parseResponse(response);
+			boolean flag = true ; // assume only two agents
+			/// assume only two agents otherwise trials should be an array
+			int nopriorityagent = 0 ;
+			int prioritizedagent = 1 ;
+			System.err.println("enter for:");
+			
+			for(int i=0;i<parsedResponse.length;i++){
+				if(parsedResponse[i]) RemoveJointAction(agentPlans,i);
+				else if(trials[i]<=3) trials[i]++ ;
+				else if (trials[i] > 3 && flag) {
+					
+					Node n = client.agentBeliefs.get(nopriorityagent);
+					
+					n.updatePerception(client.perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
+					
+					System.err.println("Agent 0 pos: (" + client.perception.agents[nopriorityagent][0] + "," + client.perception.agents[nopriorityagent][1] + ")");
+					
+					BFS cbfs = new BFS(n);
+					int[] freeCellPos = cbfs.searchForFreeCell(nopriorityagent, prioritizedagent, n, agentPlans);
+					System.err.println("found cell is null:" + freeCellPos[0]);
+					System.err.println("found cell is null:" + freeCellPos[1]);
+					
+					GiveWayHLA gwhla = new GiveWayHLA(freeCellPos[0], freeCellPos[1]);
+					
+					
+					System.err.println("Planned Actions size:" + n.plannedActions.size());
+					n.plannedActions.add(0, gwhla);
+					n.plannedActions.add(1, n.curAction);
+					System.err.println("Planned Actions size:" + n.plannedActions.size());
+					System.err.println("Agent 0 pos: (" + client.perception.agents[nopriorityagent][0] + "," + client.perception.agents[nopriorityagent][1] + ")");
+					agentPlans.get(nopriorityagent).clear();
+					System.err.println("Planned Actions size:" + n.plannedActions.size());
+					client.planNextHLA(client, agentPlans, nopriorityagent);
+					
+					trials[i] = 0;
+					flag = false ;
+				}
+				
+			}
 			
 			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
 				if(parsedResponse[agentNo]) {

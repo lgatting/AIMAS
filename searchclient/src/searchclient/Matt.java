@@ -15,7 +15,7 @@ public class Matt {
 	int rows;
 	int cols;
 	
-	DistanceBFS dbfs;
+	BFS dbfs;
 	
 	PriorityQueue<int[]> goalQueue;
 	
@@ -42,7 +42,7 @@ public class Matt {
 			}
 		}
 		
-		this.dbfs = new DistanceBFS(n);
+		this.dbfs = new BFS(n);
 	}
 	
 	public boolean[][] fillDependenceMatrix(int startRow, int startCol){

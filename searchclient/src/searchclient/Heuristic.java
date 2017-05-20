@@ -86,44 +86,16 @@ public abstract class Heuristic implements Comparator<Node> {
 					// the other value must've been set as well
 					if (boxRow != -1) {
 						if (Utils.isNeighboringPosition(agentRow, agentCol, boxRow, boxCol)) {
-							// This action has been satisfied, move to next HLA
-							//n.pastActions.add(n.curAction);
-							//n.curAction = null;
-							//System.err.println("GoToHLA satisfied, now removed");
-							//System.err.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
-							//System.err.println(n.curAction);
-							//n.strategy.refresh(n);
-							
-							//List<Node> nodes = n.getExpandedNodes(n.agentNo);
-							
-							/*if (n.curAction.size() == 0)
-								n.checkHLAs();*/
-
-//							for (Node newNode : nodes) {
-//								System.err.println(newNode);
-//								n.strategy.addToFrontier(newNode);
-//							}
-//							
-//							System.err.println(n);
-							
 							return 0;
 						} 
 							
 						// We now have found both the agent and the box; 
 						// Calculate the distance between them
 
-//						int w = Math.abs(agentRow - boxRow);
-//						int h = Math.abs(agentCol - boxCol);
-//
-//						double dist = Math.sqrt(w*w + h*h);
 						
-						DistanceBFS dbfs = new DistanceBFS(n);
+						BFS dbfs = new BFS(n);
 						
 						int dist = dbfs.distance(agentRow, agentCol, boxRow, boxCol);
-						
-//						if(dist == -1) {
-//							System.err.println("No path from agent at (" + agentRow + "," + agentCol + ") to box at (" + boxRow + "," + boxCol + ")");
-//						}
 						
 						int cost = (int)Math.round(dist * precision);
 						
@@ -135,8 +107,6 @@ public abstract class Heuristic implements Comparator<Node> {
 						
 						if (n.action.actionType == Type.Pull)
 							cost += 2 * precision;
-						
-						//cost += n.boxesOnWrongGoalsCount() * 1000;
 						
 						return cost;
 					}
@@ -199,7 +169,7 @@ public abstract class Heuristic implements Comparator<Node> {
 //
 //						double distBG = Math.sqrt(w*w + h*h);
 						
-						DistanceBFS dbfs = new DistanceBFS(n);
+						BFS dbfs = new BFS(n);
 						
 						int distBG = dbfs.distance(boxRow, boxCol, goalRow, goalCol);
 						//System.err.println("distBG: " + distBG);
@@ -240,6 +210,34 @@ public abstract class Heuristic implements Comparator<Node> {
 					}
 				}
 			}
+		}
+		else if (hla instanceof GiveWayHLA) {
+			GiveWayHLA action = (GiveWayHLA) hla;
+
+			int agentRow = n.agents[n.agentNo][0];
+			int agentCol = n.agents[n.agentNo][1];
+			
+			BFS dbfs = new BFS(n);
+			
+			int dist = dbfs.distance(agentRow, agentCol, action.cell[0], action.cell[1]);
+
+			System.err.println("dist: " + dist);
+			System.err.println("agentRow: " + agentRow);
+			System.err.println("agentCol: " + agentCol);
+			System.err.println("cell[0]: " + action.cell[0]);
+			System.err.println("cell[1]: " + action.cell[1]);
+			//System.exit(1);
+			
+			int cost = (int)Math.round(dist * precision);
+			
+			if (n.action.actionType != Type.Move)
+				// Previously MAX_VALUE
+				cost += 10 * precision;
+			
+			if (n.action.actionType == Type.Pull)
+				cost += 2 * precision;
+			
+			return cost;
 		} else {
 			// Unknown action; heuristic is unable to help
 			return 1000000;

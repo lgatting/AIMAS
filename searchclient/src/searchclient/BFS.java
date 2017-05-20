@@ -2,11 +2,12 @@ package searchclient;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import searchclient.ElementWithColor.Color;
 
 // Used to calculate the closest distance to a box from a goal.
-public class DistanceBFS {
+public class BFS {
 	boolean[][] walls;
 	int[][] agents;
 	char[][] levelToSearch;
@@ -31,7 +32,7 @@ public class DistanceBFS {
 		left, right, up, down
 	}
 	
-	public DistanceBFS(Node n){
+	public BFS(Node n){
 		this.walls = n.walls;
 		this.rows = n.rows;
 		this.cols = n.cols;
@@ -56,6 +57,38 @@ public class DistanceBFS {
 		}
 	}
 	
+	public int closestBoxFromGoal(int startRow, int startCol, char goalChar){
+		init(startRow, startCol);
+		
+		this.boxChar = java.lang.Character.toUpperCase(goalChar);
+		
+		return performDistanceSearch(null, null, null, 0);
+		
+	}
+	
+	public int closestMovableBoxFromAgent(int startRow, int startCol, int agent){
+		init(startRow, startCol);
+		
+		Color agentColor = this.colorAssignments.get((char) (agent  + '0'));
+		
+		System.err.println("" + startRow + "," + startCol + "," +agentColor);
+		
+		return performDistanceSearch(agentColor, null, null, 1);
+	}
+	
+	// otherAgentsPlan is a boolean array with the fields that other agents are planning to traverse set to true
+	public int closestSafeCellForBox(boolean[][] otherAgentsPlan, char[][] agents, int boxStartRow, int boxStartCol){		
+		init(boxStartRow, boxStartCol);
+		
+		char boxChar = levelToSearch[boxStartRow][boxStartCol];
+		
+		Color boxColor = this.colorAssignments.get(boxChar);
+		
+		System.err.println("" + boxStartRow + "," + boxStartCol);
+		
+		return performDistanceSearch(null, otherAgentsPlan, boxColor, 2);
+	}
+	
 	/**
  	 * Finds a distance between [x1, y1] and [x2, y2] or returns -1 if there is no path.
  	 * @param x1
@@ -69,7 +102,7 @@ public class DistanceBFS {
  		
  		destination = new int[] { x2, y2 };
  		
- 		return performSearch(null, null, null, 3);
+ 		return performDistanceSearch(null, null, null, 3);
  	}
 	
 	/**
@@ -86,39 +119,15 @@ public class DistanceBFS {
  		
  		destination = new int[] { x2, y2 };
  		
- 		return performSearch(null, null, null, 4);
+ 		return performDistanceSearch(null, null, null, 4);
  	}
 	
-	public int closestBoxFromGoal(int startRow, int startCol, char goalChar){
-		init(startRow, startCol);
+	public int[] searchForFreeCell(int agent, int conflictingAgent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
+		init(agents[agent][0], agents[agent][1]);
 		
-		this.boxChar = java.lang.Character.toUpperCase(goalChar);
+		boolean[][] traversalArray = TraversalArray.generateTraversalArray(n, conflictingAgent, agentPlans);
 		
-		return performSearch(null, null, null, 0);
-		
-	}
-	
-	public int closestMovableBoxFromAgent(int startRow, int startCol, int agent){
-		init(startRow, startCol);
-		
-		Color agentColor = this.colorAssignments.get((char) (agent  + '0'));
-		
-		System.err.println("" + startRow + "," + startCol + "," +agentColor);
-		
-		return performSearch(agentColor, null, null, 1);
-	}
-	
-	// otherAgentsPlan is a boolean array with the fields that other agents are planning to traverse set to true
-	public int closestSafeCellForBox(boolean[][] otherAgentsPlan, char[][] agents, int boxStartRow, int boxStartCol){		
-		init(boxStartRow, boxStartCol);
-		
-		char boxChar = levelToSearch[boxStartRow][boxStartCol];
-		
-		Color boxColor = this.colorAssignments.get(boxChar);
-		
-		System.err.println("" + boxStartRow + "," + boxStartCol);
-		
-		return performSearch(null, otherAgentsPlan, boxColor, 2);
+		return performCellSearch(agent, colorAssignments.get((char) (agent + '0')), traversalArray, null, 0);
 	}
 	
 	public void init(int row, int col){
@@ -127,9 +136,9 @@ public class DistanceBFS {
 		queue.add(createPosDistArray(row, col, 0));
 	}
 	
-	public int performSearch(Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode){
+	public int performDistanceSearch(Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode){
 		while(!queue.isEmpty()) {
-			int result = exploreNew(agentColor, otherAgentsPlan, boxColor, mode);
+			int result = exploreDistanceNew(agentColor, otherAgentsPlan, boxColor, mode);
 			if(result >= 0){
 				queue.clear();
 				return result;
@@ -137,6 +146,18 @@ public class DistanceBFS {
 		}
 		
 		return -1;
+	}
+	
+	public int[] performCellSearch(int agent, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode){
+		while(!queue.isEmpty()) {
+			int[] result = exploreCellNew(agent, agentColor, otherAgentsPlan, boxColor, mode);
+			if(result != null){
+				queue.clear();
+				return result;
+			}
+		}
+		
+		return null;
 	}
 	
 	private int[] createPosDistArray(int row, int col, int dist){
@@ -149,7 +170,7 @@ public class DistanceBFS {
 		return posDistArray;
 	}
 	
-	public int exploreNew(Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode) {
+	public int exploreDistanceNew(Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode) {
 		int[] curPosDist = queue.remove();
 		
 		int row = curPosDist[0];
@@ -188,10 +209,35 @@ public class DistanceBFS {
 		dist += 1;
 		
 		for(Direction dir : Direction.values()){
-			exploreNewAux(row, col, dist, agentColor, otherAgentsPlan, boxColor, dir, mode);
+			exploreDistanceNewAux(row, col, dist, agentColor, otherAgentsPlan, boxColor, dir, mode);
 		}
 		
 		return -1;
+	}
+	
+	
+	public int[] exploreCellNew(int agent, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode) {
+		int[] curPosDist = queue.remove();
+		
+		int row = curPosDist[0];
+		int col = curPosDist[1];
+		int dist = curPosDist[2];
+		
+		switch(mode) {
+			case 0:
+				if(otherAgentsPlan[row][col] == false){
+					return curPosDist;
+				}
+				break;
+		}
+		
+		dist += 1;
+		
+		for(Direction dir : Direction.values()){
+			exploreCellNewAux(agent, row, col, dist, agentColor, otherAgentsPlan, boxColor, dir, mode);
+		}
+		
+		return null;
 	}
 	
 	/**
@@ -206,7 +252,7 @@ public class DistanceBFS {
 	 * @param dir
 	 * @param mode
 	 */
-	public void exploreNewAux(int row, int col, int dist, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, Direction dir, int mode) {
+	public void exploreDistanceNewAux(int row, int col, int dist, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, Direction dir, int mode) {
 		switch(dir) {
 			case left:
 				row -= 1;
@@ -265,6 +311,51 @@ public class DistanceBFS {
 			
 		}
 		
+	}
+	
+	public void exploreCellNewAux(int agent, int row, int col, int dist, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, Direction dir, int mode) {
+		switch(dir) {
+		case left:
+			row -= 1;
+			break;
+		case right:
+			row += 1;
+			break;
+		case up:
+			col -= 1;
+			break;
+		case down:
+			col += 1;
+		}
+	
+		if(!walls[row][col] && copyOfLevelToSearch[row][col] != '!'){	// Check whether the new/neighbour cell has not already been explored
+			switch(mode) {
+				case 0:
+					if(copyOfLevelToSearch[row][col] == '?' && !otherAgentAtPos(agent, row, col)) {
+						queue.add(createPosDistArray(row, col, dist));	// Explores cells and add them to if the cell does not contain another agent or a box
+					}
+					break;
+			}
+			copyOfLevelToSearch[row][col] = '!';	// This marks that the cell has already been considered
+		}
+	}
+	
+	/**
+	 * Checks whether there is another agent at the position besides the one passed through the agent parameter
+	 * @param agent
+	 * @param row
+	 * @param col
+	 * @return
+	 */
+	private boolean otherAgentAtPos(int agent, int row, int col) {
+		for(int agentNo = 0; agentNo < agents.length; agentNo++) {
+			if(agentNo != agent) {
+				if(agents[agentNo][0] == row && agents[agentNo][1] == col) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 	
 	public boolean differentColoredAgentInCell(int row, int col, Color boxColor) {
