@@ -19,7 +19,7 @@ public class BoxFinder {
 			coordinates[0] = -1 ;
 			coordinates[1] = -1 ;
 		}
-			else {
+		else {
 			String actionType = action.substring(0,4);
 			String agentDir = action.substring(5,6);
 			

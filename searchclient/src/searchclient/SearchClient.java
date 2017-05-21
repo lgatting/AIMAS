@@ -212,7 +212,7 @@ public class SearchClient {
 		DeadEndCorridorSolverV2 decsv2 = new DeadEndCorridorSolverV2(discoveredGoals, initialState);
 		List<Goal> orderedGoals = decsv2.orderGoals();
 		
-		decsv2.printDependancyMatrix();
+//		decsv2.printDependancyMatrix();
 
 		Lewis l = new Lewis(discoveredGoals, initialState);
 		l.solve();
@@ -397,7 +397,7 @@ public class SearchClient {
 		
 		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
 		
-		//System.err.println(n.curAction);
+		System.err.println("Action: " + n.curAction);
 		
 //		for(int row = 0; row < n.rows; row++) {
 //			for(int col = 0; col < n.cols; col++) {
@@ -735,6 +735,7 @@ public class SearchClient {
 		    		int[] potentialbox = finder.GetBoxPos(actualAction.get(0));
 		    		
 		    		if(n.boxIds[potentialbox[0]][potentialbox[1]]!=0){
+		    			
 		    			System.err.println(potentialbox[0]+" c:"+potentialbox[1]+"------------------------------------box");
 		    			BFS cbfs = new BFS(n);
 			    		
