@@ -381,7 +381,7 @@ public class SearchClient {
 		
 		
 	}
-
+	
 	public void planNextHLA(SearchClient client, HashMap<Integer, LinkedList<Node>> agentPlans, int agentNo, boolean relaxPlan) {
 		Node n = agentBeliefs.get(agentNo);
 		
@@ -396,11 +396,9 @@ public class SearchClient {
 		
 		if(relaxPlan) {
 			n.relaxNode();
+			System.err.println("After Relaxation for agent: " + agentNo);
+			Utils.printArray(n.boxes, n.rows, n.cols);
 		}
-		
-		
-		System.err.println("After Relaxation for agent: " + agentNo);
-		Utils.printArray(n.boxes, n.rows, n.cols);
 		
 		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
 		
@@ -415,6 +413,7 @@ public class SearchClient {
 		
 		LinkedList<Node> planForAgent = searchForAgent(n.strategy, agentNo);
 		System.err.println("Search for agent " + agentNo + " completed!");
+//		System.err.println("The resulting plan is: " + planForAgent);
 		agentPlans.put(agentNo, planForAgent);
 		
 //		if(planForAgent != null) {
@@ -435,6 +434,8 @@ public class SearchClient {
 				longestPlan = planSize; 
 			}
 		}
+		
+		System.err.println("Longest plan size: " + longestPlan);
 		
 		LinkedList<String> jointActions = new LinkedList<String>();
 		
@@ -506,8 +507,8 @@ public class SearchClient {
 			
 			Node leafNode = strategy.getAndRemoveLeaf();
 			
-			System.err.println(leafNode.curAction);
-			System.err.println(leafNode);
+//			System.err.println(leafNode.curAction);
+//			System.err.println(leafNode);
 			
 			if (leafNode.isGoalState()) {
 				return leafNode.extractPlan();
@@ -557,6 +558,17 @@ public class SearchClient {
 		if(!curPlan.isEmpty()) {
 			 curPlan.remove(0);
 		}
+	}
+	
+	public boolean alreadySatisfied(int agentNo) {
+		Node n = agentBeliefs.get(agentNo);
+		
+		n.updateCurActionWithHeadOfPlannedActions();
+		
+		n.updatePerception(perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
+		
+		return n.isGoalState();
+		
 	}
  
 	public static void main(String[] args) throws Exception {
@@ -692,10 +704,24 @@ public class SearchClient {
 		while(true) {
 			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
 				if(agentPlans.get(agentNo).isEmpty()) {
-					System.err.println(client.agentBeliefs.get(agentNo).action);
+//					System.err.println("Planning: " + client.agentBeliefs.get(agentNo).action);
 					client.planNextHLA(client, agentPlans, agentNo, false);
+					if(agentPlans.get(agentNo) == null) {
+						System.err.println("Creating a relaxed plan for: " + agentNo);
+						client.planNextHLA(client, agentPlans, agentNo, true);
+						if(agentPlans.get(agentNo) != null /*|| client.alreadySatisfied(agentNo)*/) {
+							client.agentBeliefs.get(agentNo).removeHeadOfPlannedActions();
+						}
+					}
+					else {
+						client.agentBeliefs.get(agentNo).removeHeadOfPlannedActions();
+					}
 				}
 				
+			}
+			
+			for(int agentNo = 0; agentNo < 2; agentNo++) {
+				System.err.println("Agent Plan " + agentNo + ":" + client.agentBeliefs.get(agentNo).curAction + client.agentBeliefs.get(agentNo).plannedActions);
 			}
 			
 			String jointAction = client.formNextJointAction(agentPlans);
@@ -716,7 +742,11 @@ public class SearchClient {
 			System.err.println("enter for:");
 			
 			for(int i=0;i<parsedResponse.length;i++){
-				if(parsedResponse[i]) RemoveJointAction(agentPlans,i);
+				if(parsedResponse[i]) {
+					RemoveJointAction(agentPlans,i);
+					trials[i] = 0;
+					
+				}
 				else if(trials[i]<=3) trials[i]++ ;
 				else if (trials[i] > 3 && flag) {
 					
@@ -743,10 +773,41 @@ public class SearchClient {
 //					System.err.println("Planned Actions size:" + n.plannedActions.size());
 					client.planNextHLA(client, agentPlans, nopriorityagent, false);
 					
+					// NEEDS TO BE FIXED TO WORK FOR MORE THAN 2 AGENTS!!!
+					for(int agentNo = 0; agentNo < client.initialState.agentCount; agentNo++) {
+						trials[agentNo] = 0;
+					}
+					
+					flag = false ;
+				}
+				else if(false) {
+					Node n = client.agentBeliefs.get(nopriorityagent);
+					
+					n.updatePerception(client.perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
+					
+//					System.err.println("Agent 0 pos: (" + client.perception.agents[nopriorityagent][0] + "," + client.perception.agents[nopriorityagent][1] + ")");
+					
+					BFS cbfs = new BFS(n);
+					int[] boxPos = new int[2]; // THE BOX POS MUST BE RETRIEVED!!!
+					int[] tmpCellPos = cbfs.searchForTempCell(boxPos, nopriorityagent, prioritizedagent, n, agentPlans);
+//					System.err.println("found cell is null:" + freeCellPos[0]);
+//					System.err.println("found cell is null:" + freeCellPos[1]);
+					
+					GiveWayHLA gwhla = new GiveWayHLA(tmpCellPos[0], tmpCellPos[1]);
+					
+					
+//					System.err.println("Planned Actions size:" + n.plannedActions.size());
+					n.plannedActions.add(0, gwhla);
+					n.plannedActions.add(1, n.curAction);
+//					System.err.println("Planned Actions size:" + n.plannedActions.size());
+//					System.err.println("Agent 0 pos: (" + client.perception.agents[nopriorityagent][0] + "," + client.perception.agents[nopriorityagent][1] + ")");
+					agentPlans.get(nopriorityagent).clear();
+//					System.err.println("Planned Actions size:" + n.plannedActions.size());
+					client.planNextHLA(client, agentPlans, nopriorityagent, false);
+					
 					trials[i] = 0;
 					flag = false ;
 				}
-				
 			}
 			
 			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
@@ -768,22 +829,6 @@ public class SearchClient {
 			if(noOfEmptyPlans == agentCount) {
 				break;
 			}
-			
-//			if (solution == null) {
-//				System.err.println("Unable to solve level.");
-//				System.exit(0);
-//			} else {
-//				System.err.println("A solution has been found.");
-//				
-//				for (String s : solution) {
-//					System.out.println(s);
-//					String response = serverMessages.readLine();
-//					/*if (response.contains("false")) {
-//						System.err.format("Server responsed with %s to the inapplicable action: %s\n", response, s);
-//						break;
-//					}*/
-//				}
-//			}
 		}
 	}
 }

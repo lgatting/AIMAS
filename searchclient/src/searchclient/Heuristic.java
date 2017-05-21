@@ -142,41 +142,15 @@ public abstract class Heuristic implements Comparator<Node> {
 					// the other value must've been set as well
 					if (boxRow != -1 && goalRow != -1) {
 						if (goalRow == boxRow && goalCol == boxCol) {
-//							// This action has been satisfied, move to next HLA
-//							n.pastActions.add(n.curAction);
-//							//n.curAction = null;
-//							System.err.println("SatisfyGoalHLA satisfied, now removed");
-//							System.err.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
-//							System.err.println(n.curAction);
-//							//n.strategy.refresh(n);
-//							
-//							List<Node> nodes = n.getExpandedNodes(n.agentNo);
-//
-////							if (n.curAction.size() == 0)
-////								n.checkHLAs();
-//
-//							for (Node newNode : nodes)
-//								n.strategy.addToFrontier(newNode);
-							
 							return 0;
 						}
 							
 						// We now have found both the agent and the box; 
 						// Calculate the distance between them
-
-//						int w = Math.abs(goalRow - boxRow);
-//						int h = Math.abs(goalCol - boxCol);
-//
-//						double distBG = Math.sqrt(w*w + h*h);
 						
 						BFS dbfs = new BFS(n);
 						
 						int distBG = dbfs.distance(boxRow, boxCol, goalRow, goalCol);
-						//System.err.println("distBG: " + distBG);
-						
-//						if(distBG == -1) {
-//							System.err.println("No path from box at (" + boxRow + "," + boxCol + ") to goal at (" + goalRow + "," + goalCol + ")");
-//						}
 						
 						int w = Math.abs(agentRow - boxRow);
 						int h = Math.abs(agentCol - boxCol);
@@ -238,7 +212,68 @@ public abstract class Heuristic implements Comparator<Node> {
 				cost += 2 * precision;
 			
 			return cost;
-		} else {
+		}
+		else if (hla instanceof StoreTempHLA) {
+			StoreTempHLA action = (StoreTempHLA) hla;
+
+			int agentRow = n.agents[n.agentNo][0];
+			int agentCol = n.agents[n.agentNo][1];
+			int boxRow = -1;
+			int boxCol = -1;
+			
+			for (int row = 1; row < n.rows - 1; row++) {
+				for (int col = 1; col < n.cols - 1; col++) {
+					if (n.boxIds[row][col] == action.box.id) {
+						// We have found the box towards which we want to move
+						
+						boxRow = row;
+						boxCol = col;
+					}
+					
+					// Sufficient to check just row/col since once either of them has been set to something else, then
+					// the other value must've been set as well
+					if (boxRow != -1) {
+						// We now have found both the agent and the box; 
+						// Calculate the distance between them
+						
+						BFS dbfs = new BFS(n);
+						
+						int distBC = dbfs.distance(boxRow, boxCol, action.cell[0], action.cell[1]);
+						
+						int w = Math.abs(agentRow - boxRow);
+						int h = Math.abs(agentCol - boxCol);
+						
+						double distAB = Math.sqrt(w*w + h*h);
+						
+						// The agent should stay as close to his box as possible at all times
+						distAB = distAB * 50;
+						
+						double dist = distBC + distAB;
+						
+						int cost = (int)Math.round(dist * precision);
+						
+						cost += Math.abs(n.unsatisfiedGoalCount()) * precision * 1000;
+						
+						// Prefer pushing to pulling mainly because of the corridors since we don't want to end up
+						// locked up in there
+						if (n.action.actionType == Type.Pull)
+							cost += 0 * precision;
+						
+						if(action.box.letter == 'c') {
+							System.err.println("aRow, aCol:" + agentRow + "," + agentCol);
+						}
+						
+						//cost += n.boxesOnWrongGoalsCount() * 1000;
+						if(action.box.letter == 'c') {
+							System.err.println("BC, AB:" + distBC + "," + distAB);
+						}
+						
+						return cost;
+					}
+				}
+			}
+		}
+		else {
 			// Unknown action; heuristic is unable to help
 			return 1000000;
 		}
