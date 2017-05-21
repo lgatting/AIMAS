@@ -130,6 +130,15 @@ public class BFS {
 		return performCellSearch(agent, colorAssignments.get((char) (agent + '0')), traversalArray, null, 0);
 	}
 	
+	public int[] searchForTempCell(int[] boxPos, int agent, int conflictingAgent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
+		init(boxPos[0], boxPos[1]);
+		
+		boolean[][] traversalArray = TraversalArray.generateTraversalArray(n, agent, agentPlans);
+//		traversalArray[boxPos[0]][boxPos[1]] = true;
+		
+		return performCellSearch(conflictingAgent, colorAssignments.get((char) (conflictingAgent + '0')), traversalArray, colorAssignments.get(levelToSearch[boxPos[0]][boxPos[1]]), 1);
+	}
+	
 	public void init(int row, int col){
 		resetCopyOfLevel();
 		copyOfLevelToSearch[row][col] = '!';	// Mark current cell as searched
@@ -149,6 +158,7 @@ public class BFS {
 	}
 	
 	public int[] performCellSearch(int agent, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode){
+		System.err.println("performCellSearch: agent - " + agent + ", agentColor - " + agentColor + ", boxColor - " + boxColor);
 		while(!queue.isEmpty()) {
 			int[] result = exploreCellNew(agent, agentColor, otherAgentsPlan, boxColor, mode);
 			if(result != null){
@@ -156,7 +166,6 @@ public class BFS {
 				return result;
 			}
 		}
-		
 		return null;
 	}
 	
@@ -225,6 +234,7 @@ public class BFS {
 		
 		switch(mode) {
 			case 0:
+			case 1:
 				if(otherAgentsPlan[row][col] == false){
 					return curPosDist;
 				}
@@ -335,6 +345,11 @@ public class BFS {
 						queue.add(createPosDistArray(row, col, dist));	// Explores cells and add them to if the cell does not contain another agent or a box
 					}
 					break;
+				case 1:
+					if(copyOfLevelToSearch[row][col] == '?' && !otherAgentAtPos(agent, row, col)) {
+						System.err.println("Exploring");
+						queue.add(createPosDistArray(row, col, dist));	// Adds a cell to the queue if it does not contain another agent or a box
+					}
 			}
 			copyOfLevelToSearch[row][col] = '!';	// This marks that the cell has already been considered
 		}

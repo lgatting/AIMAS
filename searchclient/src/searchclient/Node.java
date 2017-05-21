@@ -19,6 +19,7 @@ import models.GoToHLA;
 import models.HighLevelAction;
 import models.Perception;
 import models.SatisfyGoalHLA;
+import models.StoreTempHLA;
 
 public class Node {
 	private static final Random RND = new Random(1);
@@ -161,6 +162,16 @@ public class Node {
 				int[] freeCell = gvhla.cell;
 				
 				return agentRow == freeCell[0] && agentCol == freeCell[1];
+			}
+			else if (curAction instanceof StoreTempHLA) {
+//				int agentRow = agents[agentNo][0];
+//				int agentCol = agents[agentNo][1];
+				
+				StoreTempHLA sthla = (StoreTempHLA) curAction;
+				int boxPos[] = Utils.findBoxPosition(((StoreTempHLA) curAction).box, boxIds);
+				int[] tmpCell = sthla.cell;
+				
+				return boxPos[0] == tmpCell[0] && boxPos[1] == tmpCell[1];
 			}
 			// Agent has satisfied all his actions; check HLAs and if none of them is broken, then consider
 			// the goal state to be reached
@@ -371,8 +382,6 @@ public class Node {
 		if (this.getClass() != obj.getClass())
 			return false;
 		Node other = (Node) obj;
-		if (this.action.equals(other.action))
-			return false;
 		if (!Arrays.deepEquals(this.agents, other.agents))
 			return false;
 		if (!Arrays.deepEquals(this.boxes, other.boxes))
