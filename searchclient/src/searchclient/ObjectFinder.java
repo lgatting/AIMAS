@@ -2,19 +2,17 @@ package searchclient;
 
 import java.util.LinkedList;
 
-import models.HighLevelAction;
-
 public class ObjectFinder {
 	int agentrow;
 	int agentcol;
 	
-	public ObjectFinder(int agentrow, int agentcol, HighLevelAction hla) {
+	public ObjectFinder(int agentrow, int agentcol) {
 	
 		this.agentrow = agentrow;
 		this.agentcol = agentcol;
 	}
 	
-	public int[] GetBoxPos(String action) {
+	public int[] getBoxPos(String action) {
 		int[] coordinates = new int[2];
 		
 		if(action == "NoOp") {
@@ -26,46 +24,24 @@ public class ObjectFinder {
 			String agentDir = action.substring(5,6);
 			
 			switch(actionType) {
-				case "Move": {
-					coordinates[0] = updateAgentPos(agentDir)[0];
-					coordinates[1] = updateAgentPos(agentDir)[1];
-					break; }
+				case "Move":
+					return updateAgentPos(agentDir);
+					
 				case "Push":
 					String boxDir = action.substring(7,8);
-					GetBoxPosPush(agentDir, boxDir);
+					return getBoxPosPush(agentDir, boxDir);
 					
-					break;
 				case "Pull":
-					String curDirBox = action.substring(7,8);
-					GetBoxPosPush(curDirBox, reverse(curDirBox));
-					
-					break;
+					return updateAgentPos(agentDir);
 			}
 		}
 		return coordinates ;
 	}
 	
 	
-	private String reverse(String dir) {
-		switch(dir) {
-			case "N":
-				return "S";
-			case "S":
-				return "N";
-			case "E":
-				return "W";
-			case "W":
-				return "E";
-		}
-		return "Invalid direction";
-	}
-	
-	
-	private int[] GetBoxPosPush(String agentDir, String boxDir) {
+	private int[] getBoxPosPush(String agentDir, String boxDir) {
 		int[] coordinates = new int[2];
 		int[] boxPos = calcBoxPos(agentrow, agentcol, agentDir);
-		char boxChar;
-		int boxId;
 		switch(boxDir) {
 			case "N":
 				

@@ -141,6 +141,7 @@ public abstract class Heuristic implements Comparator<Node> {
 					// Sufficient to check just row/col since once either of them has been set to something else, then
 					// the other value must've been set as well
 					if (boxRow != -1 && goalRow != -1) {
+//						System.err.println(boxRow + "," + boxCol + "," + goalRow + "," + goalCol);
 						if (goalRow == boxRow && goalCol == boxCol) {
 //							// This action has been satisfied, move to next HLA
 //							n.pastActions.add(n.curAction);
@@ -178,15 +179,17 @@ public abstract class Heuristic implements Comparator<Node> {
 //							System.err.println("No path from box at (" + boxRow + "," + boxCol + ") to goal at (" + goalRow + "," + goalCol + ")");
 //						}
 						
-						int w = Math.abs(agentRow - boxRow);
-						int h = Math.abs(agentCol - boxCol);
+//						int w = Math.abs(agentRow - boxRow);
+//						int h = Math.abs(agentCol - boxCol);
+//						
+//						double distAB = Math.sqrt(w*w + h*h);
 						
-						double distAB = Math.sqrt(w*w + h*h);
+						int distAB = dbfs.distance(agentRow, agentCol, boxRow, boxCol);
 						
 						// The agent should stay as close to his box as possible at all times
 						distAB = distAB * 50;
 						
-						double dist = distBG + distAB;
+						int dist = distBG + distAB;
 						
 						int cost = (int)Math.round(dist * precision);
 						

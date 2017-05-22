@@ -137,6 +137,8 @@ public class Node {
 				
 				int[] boxPos = Utils.findBoxPosition(((GoToHLA) curAction).box, boxIds);
 				
+//				System.err.println("AgentPos: " + agentRow + "," + agentCol);
+				
 				if(Utils.isNeighboringPosition(agentRow, agentCol, boxPos[0], boxPos[1])) {
 					pastActions.add(curAction);
 					strategy.clearFrontier();
@@ -150,10 +152,12 @@ public class Node {
 				int[] boxPos = Utils.findBoxPosition(((SatisfyGoalHLA) curAction).box, boxIds);
 				int[] goalPos = Utils.findGoalPosition(((SatisfyGoalHLA) curAction).goal, goalIds);
 				
-				pastActions.add(curAction);
+				if(boxPos[0] == goalPos[0] && boxPos[1] == goalPos[1]) {
+					pastActions.add(curAction);
+					return true;
+				}
 				
-				return boxPos[0] == goalPos[0] && boxPos[1] == goalPos[1];
-				
+				return false;
 				//return Character.toLowerCase(boxes[boxPos[0]][boxPos[1]]) == goals[boxPos[0]][boxPos[1]];
 			}
 			else if (curAction instanceof GiveWayHLA) {
@@ -163,7 +167,12 @@ public class Node {
 				GiveWayHLA gvhla = (GiveWayHLA) curAction;
 				int[] freeCell = gvhla.cell;
 				
-				return agentRow == freeCell[0] && agentCol == freeCell[1];
+				if(agentRow == freeCell[0] && agentCol == freeCell[1]) {
+					pastActions.add(curAction);
+					return true;
+				}
+				
+				return false;
 			}
 			else if (curAction instanceof StoreTempHLA) {
 //				int agentRow = agents[agentNo][0];
@@ -173,7 +182,12 @@ public class Node {
 				int boxPos[] = Utils.findBoxPosition(((StoreTempHLA) curAction).box, boxIds);
 				int[] tmpCell = sthla.cell;
 				
-				return boxPos[0] == tmpCell[0] && boxPos[1] == tmpCell[1];
+				if(boxPos[0] == tmpCell[0] && boxPos[1] == tmpCell[1]) {
+					pastActions.add(curAction);
+					return true;
+				}
+				
+				return false;
 			}
 			// Agent has satisfied all his actions; check HLAs and if none of them is broken, then consider
 			// the goal state to be reached

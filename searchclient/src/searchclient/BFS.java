@@ -62,7 +62,7 @@ public class BFS {
 		
 		this.boxChar = java.lang.Character.toUpperCase(goalChar);
 		
-		return performDistanceSearch(null, null, null, 0);
+		return performDistanceSearch(-1, null, null, null, 0);
 		
 	}
 	
@@ -73,7 +73,7 @@ public class BFS {
 		
 		System.err.println("" + startRow + "," + startCol + "," +agentColor);
 		
-		return performDistanceSearch(agentColor, null, null, 1);
+		return performDistanceSearch(-1, agentColor, null, null, 1);
 	}
 	
 	// otherAgentsPlan is a boolean array with the fields that other agents are planning to traverse set to true
@@ -86,7 +86,7 @@ public class BFS {
 		
 		System.err.println("" + boxStartRow + "," + boxStartCol);
 		
-		return performDistanceSearch(null, otherAgentsPlan, boxColor, 2);
+		return performDistanceSearch(-1, null, otherAgentsPlan, boxColor, 2);
 	}
 	
 	/**
@@ -99,10 +99,10 @@ public class BFS {
  	 */
 	public int distance(int x1, int y1, int x2, int y2) {
  		init(x1, y1);
- 		
+		
  		destination = new int[] { x2, y2 };
  		
- 		return performDistanceSearch(null, null, null, 3);
+ 		return performDistanceSearch(-1, null, null, null, 3);
  	}
 	
 	/**
@@ -114,12 +114,20 @@ public class BFS {
 	 * @param y2
 	 * @return
 	 */
- 	public int distance2(int x1, int y1, int x2, int y2) {
+ 	public int hasClearPath(int x1, int y1, int x2, int y2) {
  		init(x1, y1);
  		
  		destination = new int[] { x2, y2 };
  		
- 		return performDistanceSearch(null, null, null, 4);
+ 		int agent = -1;
+		for(int agentNo = 0; agentNo < agents.length; agentNo++) {
+			if(agents[agentNo][0] == x1 && agents[agentNo][1] == x2) {
+				agent = agentNo;
+				break;
+			}
+		}
+ 		
+ 		return performDistanceSearch(agent, null, null, null, 4);
  	}
 	
 	public int[] searchForFreeCell(int agent, int conflictingAgent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
@@ -147,9 +155,9 @@ public class BFS {
 		queue.add(createPosDistArray(row, col, 0));
 	}
 	
-	public int performDistanceSearch(Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode){
+	public int performDistanceSearch(int agent, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode){		
 		while(!queue.isEmpty()) {
-			int result = exploreDistanceNew(agentColor, otherAgentsPlan, boxColor, mode);
+			int result = exploreDistanceNew(agent, agentColor, otherAgentsPlan, boxColor, mode);
 			if(result >= 0){
 				queue.clear();
 				return result;
@@ -181,7 +189,7 @@ public class BFS {
 		return posDistArray;
 	}
 	
-	public int exploreDistanceNew(Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode) {
+	public int exploreDistanceNew(int agent, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode) {
 		int[] curPosDist = queue.remove();
 		
 		int row = curPosDist[0];
@@ -220,7 +228,7 @@ public class BFS {
 		dist += 1;
 		
 		for(Direction dir : Direction.values()){
-			exploreDistanceNewAux(row, col, dist, agentColor, otherAgentsPlan, boxColor, dir, mode);
+			exploreDistanceNewAux(agent, row, col, dist, agentColor, otherAgentsPlan, boxColor, dir, mode);
 		}
 		
 		return -1;
@@ -255,6 +263,7 @@ public class BFS {
 	/**
 	 * This method contains conditions to continue the BFS and has several modes for the different cases.
 	 * The current row, and column
+	 * @param agent TODO
 	 * @param row
 	 * @param col
 	 * @param dist
@@ -264,7 +273,7 @@ public class BFS {
 	 * @param dir
 	 * @param mode
 	 */
-	public void exploreDistanceNewAux(int row, int col, int dist, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, Direction dir, int mode) {
+	public void exploreDistanceNewAux(int agent, int row, int col, int dist, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, Direction dir, int mode) {
 		switch(dir) {
 			case left:
 				row -= 1;
@@ -302,7 +311,7 @@ public class BFS {
 					queue.add(createPosDistArray(row, col, dist));
 					break;
 				case 4:
-					if(copyOfLevelToSearch[row][col] == '?' || (row == destination[0] && col == destination[1])){
+					if((copyOfLevelToSearch[row][col] == '?' || (row == destination[0] && col == destination[1])) && !otherAgentAtPos(agent, row, col)){
 						queue.add(createPosDistArray(row, col, dist));
 //						System.err.println(destination[0] + "," + destination[1]);
 //						for(int r = 0; r < rows; r++) {
@@ -349,7 +358,7 @@ public class BFS {
 					break;
 				case 1:
 					if(copyOfLevelToSearch[row][col] == '?' && !otherAgentAtPos(agent, row, col)) {
-						System.err.println("Exploring");
+//						System.err.println("Exploring");
 						queue.add(createPosDistArray(row, col, dist));	// Adds a cell to the queue if it does not contain another agent or a box
 					}
 			}
