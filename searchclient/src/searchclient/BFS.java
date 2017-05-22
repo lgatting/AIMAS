@@ -130,10 +130,10 @@ public class BFS {
 		return performCellSearch(agent, colorAssignments.get((char) (agent + '0')), traversalArray, null, 0);
 	}
 	
-	public int[] searchForTempCell(int[] boxPos, int agent, int conflictingAgent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
+	public int[] searchForTempCell(int[] boxPos, int agentRequiringHelp, int conflictingAgent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
 		init(boxPos[0], boxPos[1]);
-		
-		boolean[][] traversalArray = TraversalArray.generateTraversalArray(n, agent, agentPlans);
+		System.err.println("Parameters sent for traversalArray: " + n + "," + agentRequiringHelp + "," + agentPlans);
+		boolean[][] traversalArray = TraversalArray.generateTraversalArray(n, agentRequiringHelp, agentPlans);
 //		traversalArray[boxPos[0]][boxPos[1]] = true;
 		
 		return performCellSearch(conflictingAgent, colorAssignments.get((char) (conflictingAgent + '0')), traversalArray, colorAssignments.get(levelToSearch[boxPos[0]][boxPos[1]]), 1);

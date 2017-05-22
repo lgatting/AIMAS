@@ -150,6 +150,8 @@ public class Node {
 				int[] boxPos = Utils.findBoxPosition(((SatisfyGoalHLA) curAction).box, boxIds);
 				int[] goalPos = Utils.findGoalPosition(((SatisfyGoalHLA) curAction).goal, goalIds);
 				
+				pastActions.add(curAction);
+				
 				return boxPos[0] == goalPos[0] && boxPos[1] == goalPos[1];
 				
 				//return Character.toLowerCase(boxes[boxPos[0]][boxPos[1]]) == goals[boxPos[0]][boxPos[1]];
@@ -397,7 +399,7 @@ public class Node {
 	 * Checks whether some of the HLAs need to be repaired (such as SatisfyGoal HLA if it
 	 * was destroyed on the way).
 	 */
-	/*public void checkHLAs() {
+	public void checkHLAs() {
 		for (HighLevelAction hla : pastActions) {
 			if (hla instanceof SatisfyGoalHLA) {
 				SatisfyGoalHLA act = (SatisfyGoalHLA) hla;
@@ -410,15 +412,15 @@ public class Node {
 				if (goalPos[0] != boxPos[0] || goalPos[1] != boxPos[1]) {
 					System.err.println("Broken HLA detected!");
 					
-					curAction.add(new GoToHLA(act.box));
-					curAction.add(new SatisfyGoalHLA(act.box, act.goal));
+					plannedActions.add(new GoToHLA(act.box));
+					plannedActions.add(new SatisfyGoalHLA(act.box, act.goal));
 					
 					// Add just one action and after satisfying we'll see what to do next
 					break;
 				}
 			}
 		}
-	}*/
+	}
 	
 	/**
 	 * Counts how many boxes are placed on incorrect goal in this node.

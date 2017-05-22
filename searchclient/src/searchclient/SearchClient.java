@@ -671,6 +671,11 @@ public class SearchClient {
 			}
 		}
 		
+		System.err.println("Plan for agent 1:");
+		for(int i = 0; i < agentPlans.get(1).size(); i++) {
+			System.err.println(agentPlans.get(1).get(i));
+		}
+		
 		List<HighLevelAction> hlaPlan = client.agentBeliefs.get(0).plannedActions;
 		for(int step = 0; step < hlaPlan.size(); step++) {
 			//System.err.print(hlaPlan.get(step).toString());
@@ -715,14 +720,16 @@ public class SearchClient {
 			boolean[] parsedResponse = responsePar.parseResponse(response);
 			boolean flag = true ; // assume only two agents
 			/// assume only two agents otherwise trials should be an array
-			int nopriorityagent = 0 ;
-			int prioritizedagent = 1 ;
+		
 			//System.err.println("enter for:");
 			
 			for(int i=0;i<parsedResponse.length;i++){
 				if(parsedResponse[i]) RemoveJointAction(agentPlans,i);
 				else if(trials[i]<=3) trials[i]++ ;
 				else if (trials[i] > 3 && flag) {
+					
+					int nopriorityagent = i ;
+					int prioritizedagent = (i==0 ? 1:0) ;
 					
 					Node n = client.agentBeliefs.get(nopriorityagent);
 					
@@ -732,7 +739,7 @@ public class SearchClient {
 		    		int agentcol =  n.agents[i][1]; // agent col
 					
 		    		models.BoxFinder finder = new models.BoxFinder(agentrow, agentcol);
-		    		int[] potentialbox = finder.GetBoxPos(actualAction.get(0));
+		    		int[] potentialbox = finder.GetBoxPos(actualAction.get(i));
 		    		
 		    		if(n.boxIds[potentialbox[0]][potentialbox[1]]!=0){
 		    			
@@ -763,6 +770,9 @@ public class SearchClient {
 		    		}
 		    		else {
 		    			System.err.println(potentialbox[0]+" c:"+potentialbox[1]+"------"+actualAction.get(0)+"----------------agent");
+		    			
+		    			
+		    			
 		    			BFS cbfs = new BFS(n);
 						int[] freeCellPos = cbfs.searchForFreeCell(nopriorityagent, prioritizedagent, n, agentPlans);
 						
@@ -808,8 +818,12 @@ public class SearchClient {
 			
 			int noOfEmptyPlans = 0;
 			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
-				if(client.agentBeliefs.get(agentNo).plannedActions.isEmpty() && agentPlans.get(agentNo).isEmpty()) {
-					noOfEmptyPlans += 1;
+				Node n = client.agentBeliefs.get(agentNo);
+				if(n.plannedActions.isEmpty() && agentPlans.get(agentNo).isEmpty()) {
+					n.checkHLAs();	// Checks whether the past SatisfyGoalAction is still satisfied. If not, it's added back to the plannedActions of the agent.
+					if(n.plannedActions.isEmpty()) {
+						noOfEmptyPlans += 1;
+					}
 				}
 			}
 			
