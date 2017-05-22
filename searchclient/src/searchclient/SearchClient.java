@@ -488,11 +488,11 @@ public class SearchClient {
 		n.updatePerception(perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
 		
 		if(relaxPlan) {
-//			System.err.println("RELAX!");
+			System.err.println("RELAX!");
 			n.relaxNode();
 			for(int a = 0; a < this.initialState.agentCount; a++) {
 				if(a != agentNo) {
-//					System.err.println("agentNo set to zero: " + a);
+					System.err.println("agentNo set to zero: " + a);
 					n.agents[a][0] = 0;
 					n.agents[a][1] = 0;
 				}
@@ -516,7 +516,7 @@ public class SearchClient {
 		
 //		System.err.println("bfsFindsPath(" + agentNo + ")" + bfsFindsPath(agentNo));
 		
-		if(n.curAction != null && bfsFindsPath(agentNo)) {
+		if(n.curAction != null /*&& bfsFindsPath(agentNo)*/) {
 			planForAgent = searchForAgent(n.strategy, agentNo);
 		}
 		
@@ -838,7 +838,7 @@ public class SearchClient {
 			
 			String jointAction = client.formNextJointAction(agentPlans);
 			
-			System.err.println("Agent 4 plannedActions: " + client.agentBeliefs.get(4).plannedActions);
+			System.err.println("Agent 0 plannedActions: " + client.agentBeliefs.get(0).plannedActions);
 			
 			System.out.println(jointAction);
 			String response = serverMessages.readLine();
@@ -884,17 +884,13 @@ public class SearchClient {
 		    			
 		    			for(int agentNo = 0; agentNo < client.agentCount; agentNo++) {
 		    				HighLevelAction curHla = client.agentBeliefs.get(agentNo).curAction;
-		    				// The below section adds a GoToHLA to the agent who is giving way, to ensure returning to the box after helping
 		    				if(curHla instanceof SatisfyGoalHLA) {
 		    					SatisfyGoalHLA satHla = (SatisfyGoalHLA) curHla;
 		    					if(satHla.box.id == n.boxIds[potentialObject[0]][potentialObject[1]]) {
 		    						prioritizedagent = agentNo;
-		    						System.err.println("----**---"+agentNo);
 		    						break;
 		    					}
-		    				} 
-		    				
-		    				
+		    				}
 		    				
 		    			}
 		    			
@@ -906,19 +902,6 @@ public class SearchClient {
 			    				}
 			    			}
 		    			}
-		    			
-		    			/*
-		    			if(actualAction.get(i).contains("Push")) {
-	    					
-	    					int temploc = prioritizedagent;
-			    			prioritizedagent = nopriorityagent;
-			    		    nopriorityagent = temploc ;
-	    					
-	    					
-	    				}
-	    				*/
-		    			
-		    			System.err.println("***action for agent "+i+": "+actualAction.get(i));
 		    			
 		    			BFS cbfs = new BFS(n);
 			    		
@@ -937,9 +920,7 @@ public class SearchClient {
 			    		    }
 			    		}
 			    		if (foundBox) {
-//			    			if(n.agents[prioritizedagent][0] == 1 && n.agents[prioritizedagent][1] == 18) {
-//			    				agentPlans.get(prioritizedagent).clear();
-//			    			}
+			    			//client.agentBeliefs.get(prioritizedagent).plannedActions.clear();
 			    			
 				    		StoreTempHLA sthla = new StoreTempHLA(boxToMove, tmpCell[0], tmpCell[1]);
 				    		
@@ -949,14 +930,11 @@ public class SearchClient {
 					    		if(plannedNextAction instanceof SatisfyGoalHLA) {
 					    			SatisfyGoalHLA shla = (SatisfyGoalHLA) plannedNextAction;
 					    			GoToHLA gthla = new GoToHLA(shla.box);
-					    			System.err.println("Adding GoToHLA in boxes conflict solver");
 					    			client.agentBeliefs.get(prioritizedagent).plannedActions.add(0, gthla);
 					    		}
 				    		}
-				    		System.err.println("Adding StoreTempHLA in boxes conflict solver");
+				    		
 				    		client.agentBeliefs.get(prioritizedagent).plannedActions.add(0, sthla);
-				    		
-				    		
 			    		}
 		    		}
 		    		else {
@@ -997,19 +975,9 @@ public class SearchClient {
 						
 						
 //						//System.err.println("Planned Actions size:" + n.plannedActions.size());
-						System.err.println("Adding GiveWayHLA in agents conflict solver");
 						n.plannedActions.add(0, gwhla);
 						if(n.curAction != null) {
-//							if(n.curAction instanceof SatisfyGoalHLA) {
-//								n.plannedActions.add(1, n.curAction);
-//								
-//								SatisfyGoalHLA sghla = (SatisfyGoalHLA) n.curAction;
-//								n.plannedActions.add(1, new GoToHLA(sghla.box));
-//							}
-//							else {
-							System.err.println("Adding CurActionHLA in agents conflict solver");
 							n.plannedActions.add(1, n.curAction);
-//							}
 						}
 //						//System.err.println("Planned Actions size:" + n.plannedActions.size());
 //						//System.err.println("Agent 0 pos: (" + client.perception.agents[nopriorityagent][0] + "," + client.perception.agents[nopriorityagent][1] + ")");
