@@ -123,6 +123,8 @@ public class BFS {
  	}
 	
 	public int[] searchForFreeCell(int agent, int conflictingAgent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
+		System.err.printf("searchForFreeCell: agent (%d), confAgent (%d)\n", agent, conflictingAgent);
+		
 		init(agents[agent][0], agents[agent][1]);
 		
 		boolean[][] traversalArray = TraversalArray.generateTraversalArray(n, conflictingAgent, agentPlans);
@@ -132,7 +134,7 @@ public class BFS {
 	
 	public int[] searchForTempCell(int[] boxPos, int agentRequiringHelp, int conflictingAgent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
 		init(boxPos[0], boxPos[1]);
-		System.err.println("Parameters sent for traversalArray: " + n + "," + agentRequiringHelp + "," + agentPlans);
+//		System.err.println("Parameters sent for traversalArray: " + n + "," + agentRequiringHelp + "," + agentPlans);
 		boolean[][] traversalArray = TraversalArray.generateTraversalArray(n, agentRequiringHelp, agentPlans);
 //		traversalArray[boxPos[0]][boxPos[1]] = true;
 		

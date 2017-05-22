@@ -202,6 +202,8 @@ public class SearchClient {
 	 * @return
 	 */
 	private List<HighLevelAction> generateHLAPlan(Agent agent) {
+//		System.err.println("Generating HLA Plan for agent: " + agent.id);
+		
 		List<HighLevelAction> plan = new ArrayList<HighLevelAction>();
 		// Uncomment this section to play around with the corridor solver and comment out the for-loop that follows this comment
 		List<Box> orderedBoxes = new ArrayList<Box>();
@@ -228,10 +230,15 @@ public class SearchClient {
 		Collections.reverse(orderedBoxes);
 		
 		for (Box box : orderedBoxes) {
-			////System.err.println("ADDED");
+//			System.err.println("ADDED");
 			plan.add(new GoToHLA(box));
-			plan.add(new SatisfyGoalHLA(box, box.goal));
+			plan.add(new SatisfyGoalHLA(box, box.goal));	//NOTE. This must be edited for MATALK to work!
 		}
+		
+//		for(int i=0; i < plan.size() ; i++){
+//			System.err.print(plan.get(i) + ",");
+//		}
+//		System.err.println();
 		
 		/*for (Box box : agent.boxes) {
 			plan.add(new GoToHLA(box));
@@ -364,6 +371,10 @@ public class SearchClient {
 		createGoalBoxRelationship();
 		createBoxAgentRelationship();
 		
+		for(Agent a : discoveredAgents) {
+			System.err.println("Agent " + a.id + " is assigned: " + a.boxes);
+		}
+		
 		discoverAgentPlans(strategyType, client);
 
 //		//System.err.println("Planning finished for all agents.");
@@ -385,6 +396,8 @@ public class SearchClient {
 	public void planNextHLA(SearchClient client, HashMap<Integer, LinkedList<Node>> agentPlans, int agentNo, boolean relaxPlan) {
 		Node n = agentBeliefs.get(agentNo);
 		
+//		System.err.println("Agent " + agentNo + " has the plan " + n.plannedActions);
+		
 //		//System.err.println("Agent 0 pos: (" + client.perception.agents[agentNo][0] + "," + client.perception.agents[agentNo][1] + ")");
 		
 		n.addPlannedAction();
@@ -397,7 +410,9 @@ public class SearchClient {
 		
 		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
 		
-		System.err.println("Action: " + n.curAction);
+//		System.err.println("Planning action " + n.curAction + " for agent " + agentNo);
+//		
+//		System.err.println("Planned actions size: " + n.plannedActions.size());
 		
 //		for(int row = 0; row < n.rows; row++) {
 //			for(int col = 0; col < n.cols; col++) {
@@ -406,7 +421,11 @@ public class SearchClient {
 //			//System.err.println();
 //		}
 		
-		LinkedList<Node> planForAgent = searchForAgent(n.strategy, agentNo);
+		LinkedList<Node> planForAgent = null;
+		
+		if(n.curAction != null) {
+			planForAgent = searchForAgent(n.strategy, agentNo);
+		}
 		
 		if(planForAgent == null) {
 			n.plannedActions.add(n.curAction);
@@ -495,7 +514,7 @@ public class SearchClient {
 		
 		while (true) {
             if (iterations == 1000) {
-				//System.err.println(strategy.searchStatus());
+				System.err.println(strategy.searchStatus());
 				iterations = 0;
 			}
             
@@ -671,10 +690,10 @@ public class SearchClient {
 			}
 		}
 		
-		System.err.println("Plan for agent 1:");
-		for(int i = 0; i < agentPlans.get(1).size(); i++) {
-			System.err.println(agentPlans.get(1).get(i));
-		}
+//		System.err.println("Plan for agent 5:");
+//		for(int i = 0; i < agentPlans.get(5).size(); i++) {
+//			System.err.println(agentPlans.get(5).get(i));
+//		}
 		
 		List<HighLevelAction> hlaPlan = client.agentBeliefs.get(0).plannedActions;
 		for(int step = 0; step < hlaPlan.size(); step++) {
@@ -729,7 +748,8 @@ public class SearchClient {
 				else if (trials[i] > 3 && flag) {
 					
 					int nopriorityagent = i ;
-					int prioritizedagent = (i==0 ? 1:0) ;
+				//	int prioritizedagent = (i==0 ? 1:0) ;
+					int prioritizedagent = -1 ;
 					
 					Node n = client.agentBeliefs.get(nopriorityagent);
 					
@@ -737,16 +757,31 @@ public class SearchClient {
 					
 					int agentrow = n.agents[i][0]; // agent row
 		    		int agentcol =  n.agents[i][1]; // agent col
-					
-		    		models.BoxFinder finder = new models.BoxFinder(agentrow, agentcol);
-		    		int[] potentialbox = finder.GetBoxPos(actualAction.get(i));
 		    		
-		    		if(n.boxIds[potentialbox[0]][potentialbox[1]]!=0){
+		    		System.err.println("Agent Action: " + n.curAction);
+					
+		    		searchclient.ObjectFinder objectFinder = new searchclient.ObjectFinder(agentrow, agentcol, null);
+		    		int[] potentialObject = objectFinder.GetBoxPos(actualAction.get(i));
+		    		
+		    		if(n.boxIds[potentialObject[0]][potentialObject[1]]!=0){
 		    			
-		    			System.err.println(potentialbox[0]+" c:"+potentialbox[1]+"------------------------------------box");
+		    			System.err.println(potentialObject[0]+" c:"+potentialObject[1]+"------------------------------------box");
+		    			
+		    			char boxChar = n.boxes[potentialObject[0]][potentialObject[1]];
+		    			
+		    			Color boxColor = n.colorAssignments.get(boxChar);
+		    			
+		    			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
+		    				if(n.colorAssignments.get((char) (agentNo + '0')) == boxColor) {
+		    					prioritizedagent = agentNo;
+		    					break;
+		    				}
+		    			}
+		    			
+		    			
 		    			BFS cbfs = new BFS(n);
 			    		
-			    		int[] tmpCell = cbfs.searchForTempCell(new int[]{potentialbox[0], potentialbox[1]}, nopriorityagent, prioritizedagent, n, agentPlans);
+			    		int[] tmpCell = cbfs.searchForTempCell(new int[]{potentialObject[0], potentialObject[1]}, nopriorityagent, prioritizedagent, n, agentPlans);
 			    		
 			    		System.err.println("TmpCell: " + tmpCell[0] + "," + tmpCell[1]);
 			    		
@@ -755,7 +790,7 @@ public class SearchClient {
 			    		
 			    		for (Iterator<Box> it = client.discoveredBoxes.iterator(); it.hasNext(); ) {
 			    		    boxToMove = it.next();
-			    		    if(boxToMove.id == n.boxIds[potentialbox[0]][potentialbox[1]]) {
+			    		    if(boxToMove.id == n.boxIds[potentialObject[0]][potentialObject[1]]) {
 			    		    	foundBox = true;
 			    		    	break;
 			    		    }
@@ -769,8 +804,14 @@ public class SearchClient {
 			    		}
 		    		}
 		    		else {
-		    			System.err.println(potentialbox[0]+" c:"+potentialbox[1]+"------"+actualAction.get(0)+"----------------agent");
 		    			
+		    			System.err.println(potentialObject[0]+" c:"+potentialObject[1]+"------"+actualAction.get(i)+"----------------agent");
+		    			
+		    			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
+		    				if(n.agents[agentNo][0] == potentialObject[0] && n.agents[agentNo][1] == potentialObject[1]) {
+		    					prioritizedagent = agentNo;
+		    				}
+		    			}
 		    			
 		    			
 		    			BFS cbfs = new BFS(n);
