@@ -26,6 +26,8 @@ public class Node {
 
 	public int rows;
 	public int cols;
+	
+	public boolean blocked ;
 
 	
 	// Arrays are indexed from the top-left of the level, with first index being row and second being column.
@@ -129,7 +131,15 @@ public class Node {
 		return this.parent == null;
 	}
 	
-	public boolean isGoalState() {
+	
+	
+	public boolean isGoalState(int iterations) { /// check if it does not crash SA levels
+		
+		if(iterations>=500) {
+			
+			return true ;
+		}
+		
 		if (curAction != null) {
 			if (curAction instanceof GoToHLA) {
 				int agentRow = agents[agentNo][0];
@@ -137,12 +147,12 @@ public class Node {
 				
 				int[] boxPos = Utils.findBoxPosition(((GoToHLA) curAction).box, boxIds);
 				
-//				System.err.println("AgentPos: " + agentRow + "," + agentCol);
+//				.println("AgentPos: " + agentRow + "," + agentCol);
 				
 				if(Utils.isNeighboringPosition(agentRow, agentCol, boxPos[0], boxPos[1])) {
 					pastActions.add(curAction);
 					strategy.clearFrontier();
-					System.err.println("Reached box (" + boxes[boxPos[0]][boxPos[1]] + ")");
+					// .println("Reached box (" + boxes[boxPos[0]][boxPos[1]] + ")");
 					
 					curAction = null;
 					return true;
@@ -194,7 +204,7 @@ public class Node {
 			
 			//checkHLAs();
 			
-			//System.err.println(this);
+			//.println(this);
 			
 			//return true;
 		}
@@ -238,7 +248,7 @@ public class Node {
 	
 	public void assignCommands(ArrayList<Node> expandedNodes, int agentNo){
 		for (Command c : Command.EVERY) {
-			//System.err.println("Prev: " + this.action);
+			//.println("Prev: " + this.action);
 			
 			// Determine applicability of action
 			int newAgentRow = this.agents[agentNo][0] + Command.dirToRowChange(c.dir1);
@@ -263,6 +273,7 @@ public class Node {
 					int newBoxCol = newAgentCol + Command.dirToColChange(c.dir2);
 					
 					// .. and that new cell of box is free
+					
 					if (this.cellIsFree(agentNo, newBoxRow, newBoxCol)) {
 						n.action = c;
 						n.agents[agentNo][0] = newAgentRow;
@@ -298,6 +309,7 @@ public class Node {
 	}
 
 	private boolean cellIsFree(int agentNo, int row, int col) {
+		
 		return !this.walls[row][col] && this.boxes[row][col] == 0 && !agentAt(row, col) ;
 	}
 	
@@ -314,6 +326,7 @@ public class Node {
 	}
 
 	private Node ChildNode() {
+	
 		Node copy = new Node(this, this.rows, this.cols, this.agentCount);
 		
 		copy.colorAssignments = this.colorAssignments;
@@ -418,13 +431,13 @@ public class Node {
 			if (hla instanceof SatisfyGoalHLA) {
 				SatisfyGoalHLA act = (SatisfyGoalHLA) hla;
 				
-				System.err.println("Checking HLA :" + act.toString());
+				// .println("Checking HLA :" + act.toString());
 				
 				int[] goalPos = Utils.findGoalPosition(act.goal, goalIds);
 				int[] boxPos = Utils.findBoxPosition(act.box, boxIds);
 
 				if (goalPos[0] != boxPos[0] || goalPos[1] != boxPos[1]) {
-					System.err.println("Broken HLA detected!");
+				// 	.println("Broken HLA detected!");
 					
 					plannedActions.add(new GoToHLA(act.box));
 					plannedActions.add(new SatisfyGoalHLA(act.box, act.goal));
@@ -455,7 +468,7 @@ public class Node {
 	/**
 	 * Removes boxes that are of other colour than the agent.
 	 */
-	public void relaxNode() {
+	public void relaxNode() { /// remove all the boxes that have different color
 		for(int row = 0; row < rows; row++) {
 			for(int col = 0; col < cols; col++) {
 				char boxChar = this.boxes[row][col];
@@ -464,6 +477,10 @@ public class Node {
 				}
 			}
 		}
+		
+		
+		
+		
 	}
 	
 	/**

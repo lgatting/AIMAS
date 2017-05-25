@@ -141,14 +141,14 @@ public abstract class Heuristic implements Comparator<Node> {
 					// Sufficient to check just row/col since once either of them has been set to something else, then
 					// the other value must've been set as well
 					if (boxRow != -1 && goalRow != -1) {
-//						System.err.println(boxRow + "," + boxCol + "," + goalRow + "," + goalCol);
+//						.println(boxRow + "," + boxCol + "," + goalRow + "," + goalCol);
 						if (goalRow == boxRow && goalCol == boxCol) {
 //							// This action has been satisfied, move to next HLA
 //							n.pastActions.add(n.curAction);
 //							//n.curAction = null;
-//							System.err.println("SatisfyGoalHLA satisfied, now removed");
-//							System.err.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
-//							System.err.println(n.curAction);
+//							.println("SatisfyGoalHLA satisfied, now removed");
+//							.println("Remaining unsatisfied HLAs: " + n.unsatisfiedGoalCount());
+//							.println(n.curAction);
 //							//n.strategy.refresh(n);
 //							
 //							List<Node> nodes = n.getExpandedNodes(n.agentNo);
@@ -173,10 +173,10 @@ public abstract class Heuristic implements Comparator<Node> {
 						BFS dbfs = new BFS(n);
 						
 						int distBG = dbfs.distance(boxRow, boxCol, goalRow, goalCol);
-						//System.err.println("distBG: " + distBG);
+						//.println("distBG: " + distBG);
 						
 //						if(distBG == -1) {
-//							System.err.println("No path from box at (" + boxRow + "," + boxCol + ") to goal at (" + goalRow + "," + goalCol + ")");
+//							.println("No path from box at (" + boxRow + "," + boxCol + ") to goal at (" + goalRow + "," + goalCol + ")");
 //						}
 						
 //						int w = Math.abs(agentRow - boxRow);
@@ -201,12 +201,12 @@ public abstract class Heuristic implements Comparator<Node> {
 							cost += 0 * precision;
 						
 						if(action.box.letter == 'c') {
-							System.err.println("aRow, aCol:" + agentRow + "," + agentCol);
+						//	.println("aRow, aCol:" + agentRow + "," + agentCol);
 						}
 						
 						//cost += n.boxesOnWrongGoalsCount() * 1000;
 						if(action.box.letter == 'c') {
-							System.err.println("BG, AB:" + distBG + "," + distAB);
+						//	.println("BG, AB:" + distBG + "," + distAB);
 						}
 						
 						return cost;
@@ -224,11 +224,11 @@ public abstract class Heuristic implements Comparator<Node> {
 			
 			int dist = dbfs.distance(agentRow, agentCol, action.cell[0], action.cell[1]);
 
-//			System.err.println("dist: " + dist);
-//			System.err.println("agentRow: " + agentRow);
-//			System.err.println("agentCol: " + agentCol);
-//			System.err.println("cell[0]: " + action.cell[0]);
-//			System.err.println("cell[1]: " + action.cell[1]);
+//			.println("dist: " + dist);
+//			.println("agentRow: " + agentRow);
+//			.println("agentCol: " + agentCol);
+//			.println("cell[0]: " + action.cell[0]);
+//			.println("cell[1]: " + action.cell[1]);
 			//System.exit(1);
 			
 			int cost = (int)Math.round(dist * precision);
@@ -289,12 +289,12 @@ public abstract class Heuristic implements Comparator<Node> {
 							cost += 0 * precision;
 						
 						if(action.box.letter == 'c') {
-							System.err.println("aRow, aCol:" + agentRow + "," + agentCol);
+						//	.println("aRow, aCol:" + agentRow + "," + agentCol);
 						}
 						
 						//cost += n.boxesOnWrongGoalsCount() * 1000;
 						if(action.box.letter == 'c') {
-							System.err.println("BC, AB:" + distBC + "," + distAB);
+					//		.println("BC, AB:" + distBC + "," + distAB);
 						}
 						
 						return cost;

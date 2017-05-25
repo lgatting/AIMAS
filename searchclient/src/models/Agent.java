@@ -13,6 +13,7 @@ public class Agent {
 	public int id;
 	public enum state {iddle,busy,busywaiting,assisting};
 	
+	
 	public LinkedList<Agent> AssitQueue ;
 	
 	/**

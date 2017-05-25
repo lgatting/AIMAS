@@ -35,6 +35,8 @@ public class ObjectFinder {
 					return updateAgentPos(agentDir);
 			}
 		}
+		
+	//	System.err.println("ObjectFinder.getBoxPos() object coordinates "+coordinates[0]+","+coordinates[1]);
 		return coordinates ;
 	}
 	

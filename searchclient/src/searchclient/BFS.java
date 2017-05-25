@@ -10,7 +10,7 @@ import searchclient.ElementWithColor.Color;
 public class BFS {
 	boolean[][] walls;
 	int[][] agents;
-	char[][] levelToSearch;
+	char[][] levelToSearch; /// box array + ? for everything that is not a box
 	char[][] copyOfLevelToSearch;
 	HashMap<Character, Color> colorAssignments;
 	
@@ -46,14 +46,14 @@ public class BFS {
 			for(int col = 0; col < cols; col++){
 				if(n.boxes[row][col] > 0){
 					levelToSearch[row][col] = n.boxes[row][col];
-//					System.err.print(levelToSearch[row][col]);
+//					// System.err.print(levelToSearch[row][col]);
 				}
 				else {
 					levelToSearch[row][col] = '?';
-//					System.err.print(levelToSearch[row][col]);
+//					// System.err.print(levelToSearch[row][col]);
 				}
 			}
-//			System.err.println();
+//			// System.err.println();
 		}
 	}
 	
@@ -71,7 +71,7 @@ public class BFS {
 		
 		Color agentColor = this.colorAssignments.get((char) (agent  + '0'));
 		
-		System.err.println("" + startRow + "," + startCol + "," +agentColor);
+	//	// System.err.println("" + startRow + "," + startCol + "," +agentColor);
 		
 		return performDistanceSearch(-1, agentColor, null, null, 1);
 	}
@@ -84,7 +84,7 @@ public class BFS {
 		
 		Color boxColor = this.colorAssignments.get(boxChar);
 		
-		System.err.println("" + boxStartRow + "," + boxStartCol);
+		//// System.err.println("" + boxStartRow + "," + boxStartCol);
 		
 		return performDistanceSearch(-1, null, otherAgentsPlan, boxColor, 2);
 	}
@@ -130,27 +130,57 @@ public class BFS {
  		return performDistanceSearch(agent, null, null, null, 4);
  	}
 	
-	public int[] searchForFreeCell(int agent, int conflictingAgent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
-		System.err.printf("searchForFreeCell: agent (%d), confAgent (%d)\n", agent, conflictingAgent);
+	public int[] searchForFreeCell2(int agent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
+	//	// System.err.printf("searchForFreeCell: agent (%d), confAgent (%d)\n", agent, conflictingAgent);
 		
 		init(agents[agent][0], agents[agent][1]);
 		
-		boolean[][] traversalArray = TraversalArray.generateTraversalArray(n, conflictingAgent, agentPlans);
+		// boolean[][] traversalArray = TraversalArray.generateTraversalArray2(n, agentPlans);
+		
+		boolean[][] traversalArray = TraversalArray.generateTraversalArray(n, agent, agentPlans, -1);
 		
 		return performCellSearch(agent, colorAssignments.get((char) (agent + '0')), traversalArray, null, 0);
 	}
 	
+	public int[] searchForFreeCell(int agentRequiringHelp, int conflictingAgent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
+		//	// System.err.printf("searchForFreeCell: agent (%d), confAgent (%d)\n", agent, conflictingAgent);
+			int[] result ;
+		
+			init(agents[conflictingAgent][0], agents[conflictingAgent][1]);
+
+			boolean[][] traversalArray = TraversalArray.generateTraversalArray(n, agentRequiringHelp, agentPlans, conflictingAgent);
+			
+			result = performCellSearch(conflictingAgent, colorAssignments.get((char) (conflictingAgent + '0')), traversalArray, null, 0);
+			
+			if(result==null){
+				traversalArray = TraversalArray.generateTraversalArray(n, agentRequiringHelp, agentPlans, -1);
+				result = performCellSearch(conflictingAgent, colorAssignments.get((char) (conflictingAgent + '0')), traversalArray, null, 0);
+			}
+			
+			return  result ;}
+	
 	public int[] searchForTempCell(int[] boxPos, int agentRequiringHelp, int conflictingAgent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
-		init(boxPos[0], boxPos[1]);
-//		System.err.println("Parameters sent for traversalArray: " + n + "," + agentRequiringHelp + "," + agentPlans);
-		boolean[][] traversalArray = TraversalArray.generateTraversalArray(n, agentRequiringHelp, agentPlans);
+		init(boxPos[0], boxPos[1]); // create a copy of level to search
+//		// System.err.println("Parameters sent for traversalArray: " + n + "," + agentRequiringHelp + "," + agentPlans);
+		boolean[][] traversalArray = TraversalArray.generateTraversalArray(n, agentRequiringHelp, agentPlans, -1);
+		 /// example of condition to enqueue if true, condition to stop if false
 //		traversalArray[boxPos[0]][boxPos[1]] = true;
 		
 		return performCellSearch(conflictingAgent, colorAssignments.get((char) (conflictingAgent + '0')), traversalArray, colorAssignments.get(levelToSearch[boxPos[0]][boxPos[1]]), 1);
 	}
 	
+	
+	public int[] searchNoneDeadLockedCell(int[] boxPos, int agentRequiringHelp, int conflictingAgent, Node n, HashMap<Integer, LinkedList<Node>> agentPlans) {
+		init(boxPos[0], boxPos[1]); // create a copy of level to search
+
+		boolean[][] traversalArray = TraversalArray.generateTraversalArray2(n,  agentPlans);
+		
+		
+		return performCellSearch(conflictingAgent, colorAssignments.get((char) (conflictingAgent + '0')), traversalArray, colorAssignments.get(levelToSearch[boxPos[0]][boxPos[1]]), 1);
+	}
+	
 	public void init(int row, int col){
-		resetCopyOfLevel();
+		resetCopyOfLevel(); // copu leveltoSearch to copyofleveltosearch
 		copyOfLevelToSearch[row][col] = '!';	// Mark current cell as searched
 		queue.add(createPosDistArray(row, col, 0));
 	}
@@ -168,8 +198,8 @@ public class BFS {
 	}
 	
 	public int[] performCellSearch(int agent, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode){
-		System.err.println("performCellSearch: agent - " + agent + ", agentColor - " + agentColor + ", boxColor - " + boxColor);
-		while(!queue.isEmpty()) {
+		// // System.err.println("performCellSearch: agent - " + agent + ", agentColor - " + agentColor + ", boxColor - " + boxColor);
+		while(!queue.isEmpty()) { /// we have enquued the first one in the init
 			int[] result = exploreCellNew(agent, agentColor, otherAgentsPlan, boxColor, mode);
 			if(result != null){
 				queue.clear();
@@ -179,7 +209,7 @@ public class BFS {
 		return null;
 	}
 	
-	private int[] createPosDistArray(int row, int col, int dist){
+	private int[] createPosDistArray(int row, int col, int dist){ // keep track of distance, row, col
 		int[] posDistArray = new int[3];
 		
 		posDistArray[0] = row;
@@ -219,7 +249,7 @@ public class BFS {
 			case 4:
 				// Mode for generalized problem of searching path between two locations
 				if (destination[0] == row && destination[1] == col) {
-//					System.err.println("Return dist:" + dist);
+//					// System.err.println("Return dist:" + dist);
 					return dist;
 				}
 				break;
@@ -235,7 +265,7 @@ public class BFS {
 	}
 	
 	
-	public int[] exploreCellNew(int agent, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, int mode) {
+	public int[] exploreCellNew(int agent, Color agentColor, boolean[][] traversalarray, Color boxColor, int mode) {
 		int[] curPosDist = queue.remove();
 		
 		int row = curPosDist[0];
@@ -245,16 +275,19 @@ public class BFS {
 		switch(mode) {
 			case 0:
 			case 1:
-				if(otherAgentsPlan[row][col] == false){
-					return curPosDist;
+				if(traversalarray[row][col] == false){ 
+					return curPosDist; /// goal condition
 				}
 				break;
 		}
 		
 		dist += 1;
 		
-		for(Direction dir : Direction.values()){
-			exploreCellNewAux(agent, row, col, dist, agentColor, otherAgentsPlan, boxColor, dir, mode);
+	
+	
+		
+		for(Direction dir : Direction.values()){ /// for each direction we enqueue
+			exploreCellNewAux(agent, row, col, dist, agentColor, traversalarray, boxColor, dir, mode);
 		}
 		
 		return null;
@@ -313,19 +346,19 @@ public class BFS {
 				case 4:
 					if((copyOfLevelToSearch[row][col] == '?' || (row == destination[0] && col == destination[1])) && !otherAgentAtPos(agent, row, col)){
 						queue.add(createPosDistArray(row, col, dist));
-//						System.err.println(destination[0] + "," + destination[1]);
+//						// System.err.println(destination[0] + "," + destination[1]);
 //						for(int r = 0; r < rows; r++) {
 //							for(int c = 0; c < cols; c++) {
 //								if(walls[r][c]){
-//									System.err.print("+");
+//									// System.err.print("+");
 //								}
 //								else {
-//									System.err.print(copyOfLevelToSearch[r][c]);
+//									// System.err.print(copyOfLevelToSearch[r][c]);
 //								}
 //							}
-//							System.err.println();
+//							// System.err.println();
 //						}
-//						System.err.println();
+//						// System.err.println();
 					}
 			}
 			copyOfLevelToSearch[row][col] = '!';	// This marks that the cell has already been considered
@@ -335,7 +368,7 @@ public class BFS {
 	}
 	
 	public void exploreCellNewAux(int agent, int row, int col, int dist, Color agentColor, boolean[][] otherAgentsPlan, Color boxColor, Direction dir, int mode) {
-		switch(dir) {
+		switch(dir) { /// what cell to enqueue
 		case left:
 			row -= 1;
 			break;
@@ -352,13 +385,9 @@ public class BFS {
 		if(!walls[row][col] && copyOfLevelToSearch[row][col] != '!'){	// Check whether the new/neighbour cell has not already been explored
 			switch(mode) {
 				case 0:
-					if(copyOfLevelToSearch[row][col] == '?' && !otherAgentAtPos(agent, row, col)) {
-						queue.add(createPosDistArray(row, col, dist));	// Explores cells and add them to if the cell does not contain another agent or a box
-					}
-					break;
 				case 1:
 					if(copyOfLevelToSearch[row][col] == '?' && !otherAgentAtPos(agent, row, col)) {
-//						System.err.println("Exploring");
+//						// System.err.println("Exploring");
 						queue.add(createPosDistArray(row, col, dist));	// Adds a cell to the queue if it does not contain another agent or a box
 					}
 			}
