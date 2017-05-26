@@ -126,5 +126,4 @@ public class TraversalArray {
 	} 
         return plan;
         }
-	
 }
