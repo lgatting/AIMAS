@@ -1197,6 +1197,41 @@ public class SearchClient {
 		
 	}
 	
+	public HashMap<Integer, Integer> cnflicting_agents = new HashMap<Integer, Integer>();
+	  
+public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agentLowLevelPlans){
+		
+		HashMap <String,Integer> positions = new HashMap <String,Integer>();
+		
+		for(int agentNo=0; agentNo<this.agentCount; agentNo++){
+			if(!agentLowLevelPlans.get(agentNo).isEmpty()){
+				if(agentLowLevelPlans.get(agentNo).get(0).action.actionType.equals(Command.Type.Pull) || agentLowLevelPlans.get(agentNo).get(0).action.actionType.equals(Command.Type.Push)){
+					
+					System.err.println(agentLowLevelPlans.get(agentNo).get(0).action.actionType);
+					
+					int newagentrow = agentLowLevelPlans.get(agentNo).get(0).agents[agentNo][0]; // agent row
+		    		int newagentcol = agentLowLevelPlans.get(agentNo).get(0).agents[agentNo][1]; // agent col
+		    		String newagentpos = newagentrow+"-"+newagentcol ;
+		    		if(positions.containsKey(newagentpos)){
+		    			return positions.get(newagentpos) ; // return conflicting agent
+		    		}
+		    		else {
+		    			positions.put(newagentpos, agentNo);
+		    		}
+					
+				}
+				
+	    		
+			}
+			
+    		
+		}
+		
+		return -1;
+		
+	}
+	
+	
 	public static void main(String[] args) throws Exception {
 		BufferedReader serverMessages = new BufferedReader(new InputStreamReader(System.in));
 		
@@ -1320,6 +1355,14 @@ public class SearchClient {
 				
 				client.agentOriginNode.get(agentNo).updatePerception(client.perception); // ***// check that it does not affect SA levels
 
+				
+				if(client.IsLowLevelPlanNotConflicting(agentLowLevelPlans)!=-1 && client.IsLowLevelPlanNotConflicting(agentLowLevelPlans)!=-agentNo){
+					
+					
+					
+					agentLowLevelPlans.get(agentNo).clear();
+				}
+				
 				
 				//System.err.println("Creating a normal plan for: " + agentNo);
        
