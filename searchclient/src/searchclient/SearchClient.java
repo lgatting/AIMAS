@@ -1356,7 +1356,7 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 				client.agentOriginNode.get(agentNo).updatePerception(client.perception); // ***// check that it does not affect SA levels
 
 				
-				if(client.IsLowLevelPlanNotConflicting(agentLowLevelPlans)!=-1 && client.IsLowLevelPlanNotConflicting(agentLowLevelPlans)!=-agentNo){
+				if(client.IsLowLevelPlanNotConflicting(agentLowLevelPlans)!=-1 && client.IsLowLevelPlanNotConflicting(agentLowLevelPlans)!=agentNo){
 					
 					
 					
