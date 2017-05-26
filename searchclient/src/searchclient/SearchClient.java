@@ -1207,7 +1207,7 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 			if(!agentLowLevelPlans.get(agentNo).isEmpty()){
 				if(agentLowLevelPlans.get(agentNo).get(0).action.actionType.equals(Command.Type.Pull) || agentLowLevelPlans.get(agentNo).get(0).action.actionType.equals(Command.Type.Push)){
 					
-					System.err.println(agentLowLevelPlans.get(agentNo).get(0).action.actionType);
+					///System.err.println(agentLowLevelPlans.get(agentNo).get(0).action.actionType);
 					
 					int newagentrow = agentLowLevelPlans.get(agentNo).get(0).agents[agentNo][0]; // agent row
 		    		int newagentcol = agentLowLevelPlans.get(agentNo).get(0).agents[agentNo][1]; // agent col
