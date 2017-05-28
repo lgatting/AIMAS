@@ -519,7 +519,7 @@ public class SearchClient {
 		return false;
 	}
 
-	public void planNextHLA(HashMap<Integer, LinkedList<Node>> agentLowLevelPlans, int agentNo, boolean relaxPlan) {
+	public void planNextHLA(HashMap<Integer, LinkedList<Node>> agentLowLevelPlans, int agentNo, boolean relaxPlan, boolean intial) {
 		// relax plan boolean 
 		
 		Node n = agentOriginNode.get(agentNo); // node correspin
@@ -535,16 +535,26 @@ public class SearchClient {
 		n.updatePerception(perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
 		/// updating how the level looks like right now
 //		
-//		if(relaxtype){ /// used only for replaning
-//			for(int i=0 ; i<this.agentCount ; i++){
-//				if(i!=agentNo){
-//					n.agents[i][0] = 0 ;
-//					n.agents[i][1] = 0 ;
-//				}
-//				
+		boolean agentoverbox = false;
+		
+//		for(int i=0 ; i<this.agentCount ; i++){
+//			
+//			if(this.agentOriginNode.get(i).goals[n.agents[i][0]][n.agents[i][1]]!=0){
+//				agentoverbox = true ;
 //			}
 //		}
-//		
+		
+		
+		if(deadlock || (relaxPlan && intial) ){ /// used only for replaning
+			for(int i=0 ; i<this.agentCount ; i++){
+				if(i!=agentNo){
+					n.agents[i][0] = 0 ;
+					n.agents[i][1] = 0 ;
+				}
+				
+			}
+		}
+		
 		Node temp = n.copyOfNode() ;
 		
 	if(relaxPlan) { 
@@ -558,16 +568,16 @@ public class SearchClient {
 			
 		}
 		
-		if(!bfsFindsPath(agentNo)) {
-			//System.err.println("planNextHLA(): no path with bfsFindsPath() bfs so relax agent"+agentNo);
-			for(int a = 0; a < this.initialState.agentCount; a++) {
-				if(a != agentNo) { /// relax the agents
-			// 		//System.err.println("planNextHLA(): agentNo set to zero: " + a);
-					n.agents[a][0] = 0;
-					n.agents[a][1] = 0;
-				}
-			}
-		}
+//		if(!bfsFindsPath(agentNo)) {
+//			//System.err.println("planNextHLA(): no path with bfsFindsPath() bfs so relax agent"+agentNo);
+//			for(int a = 0; a < this.initialState.agentCount; a++) {
+//				if(a != agentNo) { /// relax the agents
+//			// 		//System.err.println("planNextHLA(): agentNo set to zero: " + a);
+//					n.agents[a][0] = 0;
+//					n.agents[a][1] = 0;
+//				}
+//			}
+//		}
 		
 		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
 		
@@ -805,7 +815,7 @@ public class SearchClient {
 		
 		searchclient.ObjectFinder objectFinder = new searchclient.ObjectFinder(agentrow, agentcol);
 		 potentialObject = objectFinder.getBoxPos(actualAction.get(agentNo));
-		
+    	if(potentialObject[0]!=-1 && potentialObject[1]!=-1)
 		if(n.boxIds[potentialObject[0]][potentialObject[1]]!=0){
 			return "box" ;
 		}
@@ -822,6 +832,8 @@ public class SearchClient {
 		
 		return "unknown" ;
 	}
+	
+	public HashMap<Integer,Integer> highlowp = new HashMap<Integer,Integer>();
 	
 	public int[] GetHighLowPriorityAgent(Node n, int AgentNo, int DetectedAgent,String type){
 		
@@ -853,7 +865,7 @@ public class SearchClient {
 		else if(type.equals("agents")){
 			
 			/// give priority to agent with push or pull action
-			if(!actualAction.get(AgentNo).contains("Push") && !actualAction.get(AgentNo).contains("Pull")) {
+			if(!actualAction.get(AgentNo).contains("Push") && !actualAction.get(AgentNo).contains("Pull") && (actualAction.get(DetectedAgent).contains("Push") || actualAction.get(DetectedAgent).contains("Pull"))) {
 				agents[0] = DetectedAgent ;        
 				agents[1] =  AgentNo;
 				//System.err.println("---priorities switched");
@@ -865,6 +877,8 @@ public class SearchClient {
 		
 		
 	
+		highlowp.put(agents[0],0);
+		highlowp.put(agents[1],1);
 		
 	
 		
@@ -946,7 +960,7 @@ public class SearchClient {
 		int[] tmpCell = cbfs.searchForTempCell(new int[]{potentialObject[0], potentialObject[1]}, highPagent, lowPagent, n, agentLowLevelPlans);
 	 
 		if(tmpCell!= null){
-			//System.err.println("TmpCell: " + tmpCell[0] + "," + tmpCell[1]);
+			System.err.println("TmpCell: " + tmpCell[0] + "," + tmpCell[1]);
 			
 //			/// in case it choose the one with no oop we switch prioritized and none prioritized
 //			if(tmpCell[0] == n.agents[lowPagent][0] && tmpCell[1] == n.agents[lowPagent][1]) {
@@ -1017,12 +1031,12 @@ public class SearchClient {
 	public void PlanForGiveWay(Node n, int highPagent, int lowPagent,HashMap<Integer, LinkedList<Node>> agentLowLevelPlans){
 		BFS cbfs = new BFS(n);
 		int[] freeCellPos = cbfs.searchForFreeCell(highPagent,lowPagent, n, agentLowLevelPlans);
-		
+		// System.err.println("freeCellPos: " + freeCellPos[0] + "," + freeCellPos[1]);
 		if(freeCellPos != null){
 			//System.err.println("low agent coordinates:"+n.agents[lowPagent][0]+","+n.agents[lowPagent][1]+" freecellps:"+freeCellPos[0]+","+freeCellPos[1]);
 			
 			if(freeCellPos[0] == n.agents[lowPagent][0] && freeCellPos[1] == n.agents[lowPagent][1]) {
-				//System.err.println("special case");
+				System.err.println("special case");
 				int temploc = lowPagent;
 				lowPagent = highPagent;
 				highPagent = temploc ;
@@ -1036,6 +1050,7 @@ public class SearchClient {
 		//	//System.err.println("freeCellPos: " + freeCellPos[0] + "," + freeCellPos[1]);
 			
 			// n = client.agentOriginNode.get(lowPagent); // change n
+			
 			
 			GiveWayHLA gwhla = new GiveWayHLA(freeCellPos[0], freeCellPos[1]);
 			
@@ -1231,6 +1246,7 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 		
 	}
 	
+boolean deadlock = false ;
 	
 	public static void main(String[] args) throws Exception {
 		BufferedReader serverMessages = new BufferedReader(new InputStreamReader(System.in));
@@ -1291,11 +1307,11 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 		
 		// intial planining
 		for(int agentNo = 0; agentNo < agentCount; agentNo++) {
-			//System.err.println("Initial planning");
-			client.planNextHLA(agentLowLevelPlans, agentNo, false);
+			System.err.println("Initial planning");
+			client.planNextHLA(agentLowLevelPlans, agentNo, false, false);
 			if(agentLowLevelPlans.get(agentNo).isEmpty()) {
-				//System.err.println("Creating a relaxed plan for: " + agentNo);
-				client.planNextHLA(agentLowLevelPlans, agentNo, true);
+				System.err.println("Creating a relaxed plan for: " + agentNo);
+				client.planNextHLA(agentLowLevelPlans, agentNo, true, false);
 //				if(agentPlans.get(agentNo).isEmpty()) {
 //					client.agentBeliefs.get(agentNo).removeHeadOfPlannedActions();
 //				}
@@ -1343,14 +1359,16 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 		 
 		int k=-1;
 		
+		
+		
 		while(true) {
 			
 			k++;
-			//System.err.println("................INTERATION"+k);
+			 System.err.println("................INTERATION"+k);
 			
 			/// we try not relaxed and then we relax
 			for (int agentNo = 0; agentNo < agentCount; agentNo++) {
-				
+				 System.err.println("Creating a normal plan for: " + agentNo);
 				/// original position inside if statement
 				
 				client.agentOriginNode.get(agentNo).updatePerception(client.perception); // ***// check that it does not affect SA levels
@@ -1358,20 +1376,23 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 				
 				if(client.IsLowLevelPlanNotConflicting(agentLowLevelPlans)!=-1 && client.IsLowLevelPlanNotConflicting(agentLowLevelPlans)!=agentNo){
 					
-					
+					 System.err.println("Cplan cleared: " + agentNo);
 					
 					agentLowLevelPlans.get(agentNo).clear();
 				}
 				
 				
-				//System.err.println("Creating a normal plan for: " + agentNo);
+			
        
 				if (agentLowLevelPlans.get(agentNo).isEmpty() && !client.agentOriginNode.get(agentNo).blocked) {
 					// //System.err.println(client.agentBeliefs.get(agentNo).action);
 
-					//System.err.println("plan for: " + agentNo + " is empty and agent no blocked");
+					System.err.println("plan for: " + agentNo + " is empty and agent no blocked");
 
-						client.planNextHLA(agentLowLevelPlans, agentNo, false);
+						client.planNextHLA(agentLowLevelPlans, agentNo, false, false);
+						
+						System.err.println(agentLowLevelPlans.get(agentNo).toString());
+						
 
 					if(client.blocker.containsKey(agentNo)){
 						int other = client.blocker.get(agentNo);
@@ -1382,7 +1403,8 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 					
 					
 					if (agentLowLevelPlans.get(agentNo).isEmpty()){
-						client.planNextHLA(agentLowLevelPlans, agentNo, true);
+					System.err.println("no plan need to relax");
+						client.planNextHLA(agentLowLevelPlans, agentNo, true, false);
 					}
 					
 					
@@ -1394,29 +1416,37 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 
 			}
 			
+			
 			String jointAction = client.formNextJointAction(agentLowLevelPlans);  /// forming join action
 			/// agentlowlevelsPlans for each agent (hashmap)
 			
-			////System.err.println("Agent 0 plannedActions: " + client.agentOriginNode.get(0).plannedActions);
+//			System.err.println("Agent 0 plannedActions: " + agentLowLevelPlans.get(0).toString());
 			
 			System.out.println(jointAction); // send it to the server
 			String response = serverMessages.readLine();
 			
 
 			
-		    //System.err.print("Action:" + jointAction);
-			//System.err.println(" Response:" + response);
+		    System.err.print("Action:" + jointAction);
+			System.err.println(" Response:" + response);
+			System.err.println("");
 			boolean[] parsedResponse = responsePar.parseResponse(response);
 			
 			boolean[] editedcopyOfResponse = new boolean[parsedResponse.length];
 			
 			System.arraycopy(parsedResponse, 0, editedcopyOfResponse, 0, parsedResponse.length);
 			
+			int allnoop = 0 ;
 			for(int l=0;l<parsedResponse.length;l++){
-				if(actualAction.get(l).equals("NoOp")){
+				if(actualAction.get(l).equals("NoOp") || parsedResponse[l] == false ){
 					editedcopyOfResponse[l] = false ;
+					allnoop++;
 					
 				}
+			}
+			
+			if(allnoop==client.agentCount){
+				client.deadlock = true ;
 			}
 			
 			client.deadlockdetector(editedcopyOfResponse);
@@ -1427,13 +1457,16 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 			
 			/// assume only two agents otherwise trials should be an array
 			
+			
+			
+			
 			for (int i = 0; i < parsedResponse.length; i++) {
-				if (parsedResponse[i]) {
+				if (parsedResponse[i] && !client.deadlock) {
 					RemoveJointAction(agentLowLevelPlans, i);
 				} /// if true remove joint action
 				else if (trials[i] == 1) {
 					// replan
-					  //System.err.print("Rplaning for agent:" + i);
+					  System.err.print("Rplaning for agent:" + i);
 					  
 					Node n = client.agentOriginNode.get(i); /// get the current perception of the nopagent
 					client.agentOriginNode.get(i).updatePerception(client.perception);
@@ -1450,9 +1483,10 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 				}
 
 				else if (trials[i] > 1 && flag) {
- 
+                    
 					Node n = client.agentOriginNode.get(i); /// get the current perception of the nopagent
 		
+					client.deadlock = false ; 
 					
 					n.updatePerception(client.perception); // This updates the perception of the level; boxes,boxIds and agents rrays are updated
 					/// this statement may have bugs
@@ -1462,16 +1496,17 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 					//System.err.println("Agent " + i + "blocked by " + client.getBlockingObjectType(n, i) + " coordinates"
 						//	+ client.potentialObject[0] + " c:" + client.potentialObject[1]);
 
+					
 					if (client.getBlockingObjectType(n, i).equals("box")) {
 
-						//System.err.println("Enter box condition");
+						System.err.println("Enter box condition");
 
 						int agentbox = client.getAgentBox(n);
 
 						int highPagent = client.GetHighLowPriorityAgent(n, i, agentbox, "box")[0];
 						int lowPagent = client.GetHighLowPriorityAgent(n, i, agentbox, "box")[1];
 
-						 //System.err.println("*High agent:"+highPagent+" , Low agent"+lowPagent);
+						 System.err.println("*High agent:"+highPagent+" , Low agent"+lowPagent);
 						
 						if(!client.deadlockhandler(lowPagent, n, agentLowLevelPlans,highPagent,"box")){
 							client.PlanForStoreTemp(n, highPagent, lowPagent, agentLowLevelPlans);
@@ -1483,15 +1518,16 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 		    		}
 		    		else if(client.getBlockingObjectType(n,i).equals("agent")){
 		    				    			
-							//System.err.println("Enter agent condition");
+							System.err.println("Enter agent condition");
 		    			
 							int highPagent = client.GetHighLowPriorityAgent(n, i, client.getOpposingAgent(n), "agent")[0];
 							int lowPagent = client.GetHighLowPriorityAgent(n, i, client.getOpposingAgent(n), "agent")[1];
 		    			
-							   //System.err.println("*High agent:"+highPagent+" , Low agent"+lowPagent);
+							   System.err.println("*High agent:"+highPagent+" , Low agent"+lowPagent);
 							   
 							   
 						if(!client.deadlockhandler(lowPagent, n, agentLowLevelPlans,highPagent,"agent")){
+							  System.err.println("no deadlock");
 							client.PlanForGiveWay(n, highPagent, lowPagent,agentLowLevelPlans);
 						}
 							
@@ -1540,6 +1576,8 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 			if(noOfEmptyPlans == agentCount) {
 				break;
 			}
+			
+			client.highlowp.clear();
 	
 	} 
 	

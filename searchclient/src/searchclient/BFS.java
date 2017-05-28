@@ -153,6 +153,7 @@ public class BFS {
 			result = performCellSearch(conflictingAgent, colorAssignments.get((char) (conflictingAgent + '0')), traversalArray, null, 0);
 			
 			if(result==null){
+				System.err.println("not null");
 				traversalArray = TraversalArray.generateTraversalArray(n, agentRequiringHelp, agentPlans, -1);
 				result = performCellSearch(conflictingAgent, colorAssignments.get((char) (conflictingAgent + '0')), traversalArray, null, 0);
 			}
@@ -203,6 +204,7 @@ public class BFS {
 			int[] result = exploreCellNew(agent, agentColor, otherAgentsPlan, boxColor, mode);
 			if(result != null){
 				queue.clear();
+				
 				return result;
 			}
 		}

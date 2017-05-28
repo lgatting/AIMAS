@@ -55,9 +55,9 @@ public class TraversalArray {
 		
 		for(int r=0; r<n.rows; r++){
 			for(int c=0; c<n.cols; c++){
-				// System.err.print(plan[r][c]+" ");
+				System.err.print(plan[r][c]+" ");
 			}
-			// System.err.println("");
+			System.err.println("");
 		}
 	// System.err.println("----------------------------------");
 		
