@@ -221,17 +221,11 @@ public class SearchClient {
 		DeadEndCorridorSolverV2 decsv2 = new DeadEndCorridorSolverV2(discoveredGoals, initialState);
 		List<Goal> orderedGoals = decsv2.orderGoals();
 		
-//		decsv2.printDependancyMatrix();
 
 		Lewis l = new Lewis(discoveredGoals, initialState);
 		l.solve();
 		
-		//PositionPenalizer pp = new PositionPenalizer(discoveredGoals, initialState);
-		//pp.solve();
-		
-		////System.err.println("Discovered order of goals using corridor solver: " + orderedGoals);
-		
-		////System.err.println();
+
 
 		Collections.sort(orderedBoxes);
 		Collections.reverse(orderedBoxes);
@@ -244,15 +238,7 @@ public class SearchClient {
 			}
 		}
 		
-//		for(int i=0; i < plan.size() ; i++){
-//			//System.err.print(plan.get(i) + ",");
-//		}
-//		//System.err.println();
-		
-		/*for (Box box : agent.boxes) {
-			plan.add(new GoToHLA(box));
-			plan.add(new SatisfyGoalHLA(box, box.goal));
-		}*/
+
 		
 		return plan;
 	}
@@ -364,28 +350,17 @@ public class SearchClient {
 	 * Assigns all boxes that have been assigned to goals to some agent.
 	 */
 	private void createBoxAgentRelationship() {
-		// For now, assignes a box to the first available agent with matching color
-		/*
-		for (Box box : discoveredBoxes) {
-			for (Agent agent : discoveredAgents) {
-				if (box.goal != null && box.color == agent.color) {
-					agent.boxes.add(box);
-					break;
-				}
-			}
-		}
-		*/
+
 		
 		int[] numberofboxesAttributed = new int[this.agentCount];
-		//System.err.println("boxes disco");
+	
 		for (Box box : discoveredBoxes) { // for everybox
-			//System.err.println("---"+box.id+" "+box.letter);
+
 			LinkedList<Agent> potentialagent = new LinkedList<Agent>();
 			for (Agent agent : discoveredAgents) { // find potential agents
 				
 				if (box.goal != null && box.color == agent.color) {
-					//agent.boxes.add(box);
-					//System.err.println("--box"+box.id+" "+box.letter+" matched agent "+agent.id);
+
 				
 					int[] boxPos = Utils.findBoxPosition(box, initialState.boxIds);
 					    	
@@ -406,21 +381,21 @@ public class SearchClient {
 				
 			int lowestagentcount = 100;
 			int agentnumber = -1 ;
-			////System.err.println("potential agents : ");
+			
 			for(int i=0; i<potentialagent.size();i++){
-			//	//System.err.print(potentialagent.get(i).id+", ");
+			
 				
 				int nboxes = numberofboxesAttributed[potentialagent.get(i).id];
 				
 				if(nboxes<lowestagentcount) {lowestagentcount = nboxes; agentnumber = potentialagent.get(i).id;  }
 
 			}
-			////System.err.println("  ");
+			
 			for (Agent agent : discoveredAgents) {
 				if (agent.id == agentnumber) {
 				agent.boxes.add(box);
 				numberofboxesAttributed[agent.id]++;
-		    //System.err.println("box "+box.letter+" assigned to "+agent.id);
+		 
 				}
 			}
 			
@@ -431,32 +406,17 @@ public class SearchClient {
 	}
 
 	public void init(StrategyType strategyType, SearchClient client) throws IOException {
-		////System.err.format("Search starting with strategy %s.\n", strategyType);
-		
-		// //System.err.println("s client"+client.initialState);
+
 		
 		createGoalBoxRelationship();
 		createBoxAgentRelationship();
 		
 		for(Agent a : discoveredAgents) {
-			// //System.err.println("Agent " + a.id + " is assigned: " + a.boxes);
+		
 		}
 		
 		discoverAgentPlans(strategyType, client);
 
-//		////System.err.println("Planning finished for all agents.");
-		
-//		// Sending joint actions to server for both SA and MA levels
-//		LinkedList<String> jointActions = resolveConflicts(agentPlans);
-//		////System.err.println("Joint actions successfuly generated.");
-//		////System.err.println(jointActions);
-//		
-//		return jointActions;
-		
-		//return agentPlans;
-		
-		//return formJointActions(agentPlans);
-		
 		
 	}
 	
@@ -524,25 +484,14 @@ public class SearchClient {
 		
 		Node n = agentOriginNode.get(agentNo); // node correspin
 		
-//		//System.err.println("Agent " + agentNo + " has the plan " + n.plannedActions);
-		
-//		////System.err.println("Agent 0 pos: (" + client.perception.agents[agentNo][0] + "," + client.perception.agents[agentNo][1] + ")");
-		
+	
 		n.addPlannedAction(); /// extract the head HLA action
 		
 		
 		
-		n.updatePerception(perception); // This updates the perception of the level; boxes, boxIds and agents arrays are updated
-		/// updating how the level looks like right now
-//		
+		n.updatePerception(perception); 		
 		boolean agentoverbox = false;
-		
-//		for(int i=0 ; i<this.agentCount ; i++){
-//			
-//			if(this.agentOriginNode.get(i).goals[n.agents[i][0]][n.agents[i][1]]!=0){
-//				agentoverbox = true ;
-//			}
-//		}
+
 		
 		
 		if(deadlock || (relaxPlan && intial) ){ /// used only for replaning
@@ -559,7 +508,7 @@ public class SearchClient {
 		
 	if(relaxPlan) { 
 			
-			//System.err.println("planNextHLA(): RELAX!");
+			
 			
 			n.relaxNode();
 			
@@ -568,64 +517,31 @@ public class SearchClient {
 			
 		}
 		
-//		if(!bfsFindsPath(agentNo)) {
-//			//System.err.println("planNextHLA(): no path with bfsFindsPath() bfs so relax agent"+agentNo);
-//			for(int a = 0; a < this.initialState.agentCount; a++) {
-//				if(a != agentNo) { /// relax the agents
-//			// 		//System.err.println("planNextHLA(): agentNo set to zero: " + a);
-//					n.agents[a][0] = 0;
-//					n.agents[a][1] = 0;
-//				}
-//			}
-//		}
+
 		
-		n.strategy.addToFrontier(n);	// NOTE! THE LATEST PERCEPT MUST BE PART OF THE ADDED NODE, OTHERWISE THE PLANNING WILL CRASH DUE TO LATEST AGENT AND BOX POSITION UNKNOWN!
-		
-	//	//System.err.println("planNextHLA(): Planning action " + n.curAction + " for agent " + agentNo);
-//		
-//		//System.err.println("Planned actions size: " + n.plannedActions.size());
-		
-//		for(int row = 0; row < n.rows; row++) {
-//			for(int col = 0; col < n.cols; col++) {
-//				////System.err.print(n.goalIds[row][col]);
-//			}
-//			////System.err.println();
-//		}
+		n.strategy.addToFrontier(n);	
 		
 		LinkedList<Node> planForAgent = null; /// initiate low level plan
 		
-//		//System.err.println("bfsFindsPath(" + agentNo + ")" + bfsFindsPath(agentNo));
-		
 	
 		
-		if(n.curAction != null /*&& bfsFindsPath(agentNo)*/) {
-		//	//System.err.println("planNextHLA():enter searchForAgent(), agent " + agentNo);
+		if(n.curAction != null ) {
+	
 			planForAgent = searchForAgent(n.strategy, agentNo); /// generate the low level actions
-		// 	//System.err.println("planNextHLA():exit searchForAgent(), agent " + agentNo);
+		
 		}
 		
-		// //System.err.println("plan for agent"+agentNo+" is:"+planForAgent);
+	
 		
 		if(planForAgent == null) {
 			n.plannedActions.add(0, n.curAction); /// we put it again in plannedAction for second trial that will be relaxed
 			planForAgent = new LinkedList<Node>(); // prevent null pointer exception
 		}
 		
-//		//System.err.println("Low level plan for agent "+agentNo);
-//		for(int j=0; j<planForAgent.size() ; j++){
-//			//System.err.print(planForAgent.get(j)+", ");
-//		}
-//		//System.err.println("");
+
 		
 		agentLowLevelPlans.put(agentNo, planForAgent); // hashmap of linked list of each each agent lower plans
-		/// collection for planForAgent
-		
-//		if(planForAgent != null) {
-//			////System.err.println("Solution found for agent " + agentNo + ":");
-//			for(Node node : planForAgent) {
-//				////System.err.println(node.toString());
-//			}
-//		}
+
 		
 		n.strategy.clearFrontier();
 	}
@@ -708,7 +624,7 @@ public class SearchClient {
 			iterations3++;
 			
             if (iterations == 1000) {
-				//System.err.println(strategy.searchStatus());
+		
 				iterations = 0;
 				
 			}
@@ -720,11 +636,11 @@ public class SearchClient {
 
 			Node leafNode = strategy.getAndRemoveLeaf();
 			if(limit > 0) {
-			//	//System.err.println(leafNode);
+	
 				limit--;
 			}
 			
-			if(iterations2==200){ /// *** check if it does not break SA levels
+			if(iterations2==200){
 				iterations2 = 0 ;
 				for(int i=0 ; i<this.agentCount ; i++){
 				if(i!=agentNo){
@@ -754,16 +670,12 @@ public class SearchClient {
 				return leafNode.extractPlan();
 			}
 			
-//			////System.err.println("Agent 0 pos: (" + leafNode.agents[agentNo][0] + "," + leafNode.agents[agentNo][1] + ")");
-			
-			
+		
 			strategy.addToExplored(leafNode);
 			
 			for (Node n : leafNode.getExpandedNodes(agentNo)) { // The list of expanded nodes is shuffled randomly; see Node.java.
-//				////System.err.println("3. Agent 0 pos: (" + n.agents[agentNo][0] + "," + n.agents[agentNo][1] + ")");
 				if (!strategy.isExplored(n) && !strategy.inFrontier(n)) {
-//					//System.err.println("Unique States: " + uniqueStates++);
-//					//System.err.println(n);
+
 					strategy.addToFrontier(n);
 				}
 			}
@@ -780,9 +692,9 @@ public class SearchClient {
 		for(int agentNo = 0; agentNo < agentCount; agentNo++) {
 			LinkedList<Node> agentlowlevelplan = agentPlans.get(agentNo);
 			if(!agentlowlevelplan.isEmpty()) {
-				agentsAction[agentNo] = agentlowlevelplan.get(0).action.toString(); // temp 
+				agentsAction[agentNo] = agentlowlevelplan.get(0).action.toString(); 
 				
-				jointAction += agentsAction[agentNo]; // extra first first action of low levelplan
+				jointAction += agentsAction[agentNo]; 
 			}
 			else {
 				agentsAction[agentNo] = "NoOp";
@@ -810,8 +722,7 @@ public class SearchClient {
 		
 		int agentrow = n.agents[agentNo][0]; // agent row
 		int agentcol =  n.agents[agentNo][1]; // agent col
-		
-		// //System.err.println("Agent Action: " + n.curAction);
+
 		
 		searchclient.ObjectFinder objectFinder = new searchclient.ObjectFinder(agentrow, agentcol);
 		 potentialObject = objectFinder.getBoxPos(actualAction.get(agentNo));
@@ -845,21 +756,7 @@ public class SearchClient {
 		
 		if(type.equals("box")){
 			
-			/// prioritize the agent which has a SatisfyGoalHLA current action  good for case 0A1
-			/// read the current high level action to decide with agent should prioritized in case of 0A1
-			
-//			for(int i = 0; i < agentCount; i++) {
-//				HighLevelAction curHla = agentOriginNode.get(i).curAction;
-//				if(curHla instanceof SatisfyGoalHLA) {
-//					SatisfyGoalHLA satHla = (SatisfyGoalHLA) curHla;
-//					if(satHla.box.id == n.boxIds[potentialObject[0]][potentialObject[1]]) {
-//						agents[0] = i ;        
-//						agents[1] = AgentNo ;
-//						break;
-//					}
-//				}
-//				
-//			}
+
 			
 		}
 		else if(type.equals("agents")){
@@ -909,8 +806,7 @@ public class SearchClient {
 		int counter = 0 ;
 		for(int i = 0; i < agentCount; i++) {
 			if(n.colorAssignments.get((char) (i + '0')) == boxColor) { 
-				//colorAssignments has all the colors assigned to aggents and boxes
-				//return i;
+
 				availableAgents[counter]=i ;
 				counter++;
 			}
@@ -960,25 +856,9 @@ public class SearchClient {
 		int[] tmpCell = cbfs.searchForTempCell(new int[]{potentialObject[0], potentialObject[1]}, highPagent, lowPagent, n, agentLowLevelPlans);
 	 
 		if(tmpCell!= null){
-			System.err.println("TmpCell: " + tmpCell[0] + "," + tmpCell[1]);
+		//	System.err.println("TmpCell: " + tmpCell[0] + "," + tmpCell[1]);
 			
-//			/// in case it choose the one with no oop we switch prioritized and none prioritized
-//			if(tmpCell[0] == n.agents[lowPagent][0] && tmpCell[1] == n.agents[lowPagent][1]) {
-//				//System.err.println("special case");
-//				
-//				
-//				
-////				int temploc = lowPagent;
-////				lowPagent = highPagent;
-////				highPagent = temploc ;
-////				tmpCell = cbfs.searchForTempCell(new int[]{potentialObject[0], potentialObject[1]}, highPagent, lowPagent, n, agentLowLevelPlans);
-////				
-//			// 	n = agentOriginNode.get(highPagent); // change n
-//			}
-//			else {
-//				//System.err.println("not special case");
-//			}
-			
+
 			/// get the box object from the box location 
 			for (Iterator<Box> it = discoveredBoxes.iterator(); it.hasNext(); ) {
 			    boxToMove = it.next();
@@ -990,20 +870,16 @@ public class SearchClient {
 			if (foundBox && lowPagent!=-1) {
 				
 				agentLowLevelPlans.get(lowPagent).clear();
-				//client.agentBeliefs.get(prioritizedagent).plannedActions.clear();
+			
 				
 	    		StoreTempHLA sthla = new StoreTempHLA(boxToMove, tmpCell[0], tmpCell[1]);
 	    		
 	    		if(!agentOriginNode.get(lowPagent).plannedActions.isEmpty()) { /// check if there are high level actions
 	    			
-	    			//System.err.println("planing to move object to tempcell "+tmpCell[0]+","+tmpCell[1]+"by "+lowPagent);
-		    		
+	    		
 					HighLevelAction plannedNextAction = agentOriginNode.get(lowPagent).plannedActions.get(0);
 
-					//// if it is a satifiy you make a goto because we satisfy need
-					//// to the agent to be holding the box.
-
-					/// precotion made for the next step
+				
 					if (plannedNextAction instanceof SatisfyGoalHLA) {
 						SatisfyGoalHLA shla = (SatisfyGoalHLA) plannedNextAction;
 						GoToHLA gthla = new GoToHLA(shla.box); /// go to the box
@@ -1013,14 +889,14 @@ public class SearchClient {
 					}
 				}
 
-				/// add StoreTempHLA
+				
 				agentOriginNode.get(lowPagent).plannedActions.add(0, sthla);
 				
-				//System.err.println("planned actions:");
+			
 				for(int k=0;k<agentOriginNode.get(lowPagent).plannedActions.size();k++){
-					//System.err.print(" "+agentOriginNode.get(lowPagent).plannedActions.get(k)+",");
+					
 				}
-				//System.err.println("--");
+				
 				
 			}
 		}
@@ -1031,42 +907,31 @@ public class SearchClient {
 	public void PlanForGiveWay(Node n, int highPagent, int lowPagent,HashMap<Integer, LinkedList<Node>> agentLowLevelPlans){
 		BFS cbfs = new BFS(n);
 		int[] freeCellPos = cbfs.searchForFreeCell(highPagent,lowPagent, n, agentLowLevelPlans);
-		// System.err.println("freeCellPos: " + freeCellPos[0] + "," + freeCellPos[1]);
+		
 		if(freeCellPos != null){
-			//System.err.println("low agent coordinates:"+n.agents[lowPagent][0]+","+n.agents[lowPagent][1]+" freecellps:"+freeCellPos[0]+","+freeCellPos[1]);
 			
 			if(freeCellPos[0] == n.agents[lowPagent][0] && freeCellPos[1] == n.agents[lowPagent][1]) {
-				System.err.println("special case");
+			// 	System.err.println("special case");
 				int temploc = lowPagent;
 				lowPagent = highPagent;
 				highPagent = temploc ;
 				freeCellPos = cbfs.searchForFreeCell(highPagent, lowPagent, n, agentLowLevelPlans);
-			// 	n = agentOriginNode.get(highPagent); // change n
+	
 			}
 			else {
-				//System.err.println("not special case");
+				
 			}
 			
-		//	//System.err.println("freeCellPos: " + freeCellPos[0] + "," + freeCellPos[1]);
-			
-			// n = client.agentOriginNode.get(lowPagent); // change n
 			
 			
 			GiveWayHLA gwhla = new GiveWayHLA(freeCellPos[0], freeCellPos[1]);
 			
 			
-//			////System.err.println("Planned Actions size:" + n.plannedActions.size());
-			
-			// add give way to none prioritized node
-			
 			if(!agentOriginNode.get(lowPagent).plannedActions.isEmpty()) { /// check if there are high level actions
 	    		
 				
 				HighLevelAction plannedNextAction = agentOriginNode.get(lowPagent).plannedActions.get(0);
-				
-				//// if it is a satifiy you make a goto because we satisfy need to the agent to be holding the box. 
-	   
-				 /// precotion made for the next step
+
 	    		if(plannedNextAction instanceof SatisfyGoalHLA) {
 	    			SatisfyGoalHLA shla = (SatisfyGoalHLA) plannedNextAction;
 	    			GoToHLA gthla = new GoToHLA(shla.box); /// go to the box that should be satisfied
@@ -1075,19 +940,12 @@ public class SearchClient {
 			}
 			
 			
-			// n.plannedActions.add(0, gwhla);
 			 agentOriginNode.get(lowPagent).plannedActions.add(0, gwhla);
-			
-//				if(n.curAction != null) {
-//					n.plannedActions.add(1, n.curAction);
-//				}
+
 			
 			
-//			////System.err.println("Planned Actions size:" + n.plannedActions.size());
-//			////System.err.println("Agent 0 pos: (" + client.perception.agents[nopriorityagent][0] + "," + client.perception.agents[nopriorityagent][1] + ")");
-			agentLowLevelPlans.get(lowPagent).clear();
-//			////System.err.println("Planned Actions size:" + n.plannedActions.size());
-			// client.planNextHLA(agentLowLevelPlans, lowPagent, false);
+		agentLowLevelPlans.get(lowPagent).clear();
+
 			
 			
 		}
@@ -1114,7 +972,7 @@ public class SearchClient {
 		}
 		
 		if(deadlockcounter>3){
-			//System.err.println("deadlock detected");
+		
 		    isdeadlock= true ;
 
 		}
@@ -1127,20 +985,20 @@ public class SearchClient {
 	public boolean deadlockhandler(int lowPagent, Node n, HashMap<Integer, LinkedList<Node>> agentLowLevelPlans,int highPagent, String type){
 		boolean returnvalue = false ;
 		boolean cellfound = false ;
-		//System.err.println("enter deadlock handler()"+", agent: "+lowPagent);
+		
 		if(isdeadlock){
-			//System.err.println("deadlock handler() isdeadlock"+", agent: "+lowPagent);
+		
 			
 			BFS cbfs = new BFS(n);
 			int[] freeCellPos = new int[2];
 			freeCellPos[0] = -1 ;
 			freeCellPos[1] = -1 ;
 			
-			//System.err.println(":inside deadlock handler() lowp:"+lowPagent+" highp:"+highPagent);
+		
 			freeCellPos = cbfs.searchForFreeCell2(highPagent, n, agentLowLevelPlans);
 			
 			if(freeCellPos != null){
-				//System.err.println("---agent: "+lowPagent+", freecell coordinates f1:"+freeCellPos[0]+","+freeCellPos[1]);
+			
 				isdeadlock = false ;
 				cellfound = true ;
 				
@@ -1150,7 +1008,7 @@ public class SearchClient {
 				
 				if(cellfound && lowPagent!=-1){
 					
-					//System.err.println("deadlock handler() cellfound"+", agent: "+lowPagent);
+				
 					GiveWayHLA gwhla = new GiveWayHLA(freeCellPos[0], freeCellPos[1]);		
 					if(!agentOriginNode.get(lowPagent).plannedActions.isEmpty()) { /// check if there are high level actions
                      HighLevelAction plannedNextAction = agentOriginNode.get(lowPagent).plannedActions.get(0);
@@ -1173,23 +1031,17 @@ public class SearchClient {
 					
 					
 			          freeCellPos = cbfs.searchNoneDeadLockedCell(freeCellPos, highPagent,lowPagent, n, agentLowLevelPlans);
-						// in case it crash change and remove the comment
-//						freeCellPos = cbfs.searchForFreeCell2(lowPagent, n, agentLowLevelPlans);
-//			
-//						if(freeCellPos==null){
-//							freeCellPos = cbfs.searchForFreeCell2(highPagent, n, agentLowLevelPlans);
-//						}
-						
+
 			          
 			          if(freeCellPos!=null)
 			          
-							//System.err.println("deadlock handler() cellfound"+", agent: "+highPagent);
+							
 							 gwhla = new GiveWayHLA(freeCellPos[0], freeCellPos[1]);		
-							if(!agentOriginNode.get(highPagent).plannedActions.isEmpty()) { /// check if there are high level actions
+							if(!agentOriginNode.get(highPagent).plannedActions.isEmpty()) {
 		                     HighLevelAction plannedNextAction = agentOriginNode.get(highPagent).plannedActions.get(0);
 					    		if(plannedNextAction instanceof SatisfyGoalHLA) {
 					    			SatisfyGoalHLA shla = (SatisfyGoalHLA) plannedNextAction;
-					    			GoToHLA gthla = new GoToHLA(shla.box); /// go to the box that should be satisfied
+					    			GoToHLA gthla = new GoToHLA(shla.box); 
 					    			agentOriginNode.get(highPagent).plannedActions.add(0, gthla);
 					    		}
 							}
@@ -1197,15 +1049,11 @@ public class SearchClient {
 							agentLowLevelPlans.get(highPagent).clear();
 							returnvalue = true ;
 							
-						
 				
-//					
-//					
                     }
 			
 				}
 					
-		//System.err.println("deadlock handler() exit"+", agent: "+lowPagent);
 			return returnvalue ;
 		
 		
@@ -1221,14 +1069,12 @@ public int  IsLowLevelPlanNotConflicting(HashMap<Integer, LinkedList<Node>> agen
 		for(int agentNo=0; agentNo<this.agentCount; agentNo++){
 			if(!agentLowLevelPlans.get(agentNo).isEmpty()){
 				if(agentLowLevelPlans.get(agentNo).get(0).action.actionType.equals(Command.Type.Pull) || agentLowLevelPlans.get(agentNo).get(0).action.actionType.equals(Command.Type.Push)){
-					
-					///System.err.println(agentLowLevelPlans.get(agentNo).get(0).action.actionType);
-					
-					int newagentrow = agentLowLevelPlans.get(agentNo).get(0).agents[agentNo][0]; // agent row
-		    		int newagentcol = agentLowLevelPlans.get(agentNo).get(0).agents[agentNo][1]; // agent col
+						
+					int newagentrow = agentLowLevelPlans.get(agentNo).get(0).agents[agentNo][0]; 
+		    		int newagentcol = agentLowLevelPlans.get(agentNo).get(0).agents[agentNo][1];
 		    		String newagentpos = newagentrow+"-"+newagentcol ;
 		    		if(positions.containsKey(newagentpos)){
-		    			return positions.get(newagentpos) ; // return conflicting agent
+		    			return positions.get(newagentpos) ; 
 		    		}
 		    		else {
 		    			positions.put(newagentpos, agentNo);
@@ -1250,11 +1096,7 @@ boolean deadlock = false ;
 	
 	public static void main(String[] args) throws Exception {
 		BufferedReader serverMessages = new BufferedReader(new InputStreamReader(System.in));
-		
-		// Use stderr to print to console
-		////System.err.println("SearchClient initializing. I am sending this using the error output stream.");
-
-		// Read level and create the initial state of the problem
+	
 		SearchClient client = new SearchClient(serverMessages);
 
 		StrategyType strategyType = null;
@@ -1278,12 +1120,10 @@ boolean deadlock = false ;
                     break;
                 default:
                 	strategyType = StrategyType.bfs;
-                    ////System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
-            }
+                             }
         } else {
         	strategyType = StrategyType.bfs;
-            ////System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to set the search strategy.");
-        }
+               }
         
      
         
@@ -1291,70 +1131,41 @@ boolean deadlock = false ;
         HashMap<Integer, LinkedList<Node>> agentLowLevelPlans = new HashMap<Integer, LinkedList<Node>>();
         
 		try {
-			//System.err.println("detected boxes");
+		
 			for(int i=0;i<client.initialState.rows;i++){
 				for(int j=0; j<client.initialState.cols;j++){
-					//System.err.print(client.initialState.boxes[i][j]);
+					
 				}
-				//System.err.println();
+		
 			}
 			
 			client.init(strategyType, client);
 		} catch (OutOfMemoryError ex) {
-			////System.err.println("Maximum memory usage exceeded.");
+			
 		}
 		
 		
-		// intial planining
+
 		for(int agentNo = 0; agentNo < agentCount; agentNo++) {
-			System.err.println("Initial planning");
+		//	System.err.println("Initial planning");
 			client.planNextHLA(agentLowLevelPlans, agentNo, false, false);
 			if(agentLowLevelPlans.get(agentNo).isEmpty()) {
-				System.err.println("Creating a relaxed plan for: " + agentNo);
+			//	System.err.println("Creating a relaxed plan for: " + agentNo);
 				client.planNextHLA(agentLowLevelPlans, agentNo, true, false);
-//				if(agentPlans.get(agentNo).isEmpty()) {
-//					client.agentBeliefs.get(agentNo).removeHeadOfPlannedActions();
-//				}
 			}
 		}
 		
-//		//System.err.println("Plan for agent 5:");
-//		for(int i = 0; i < agentPlans.get(5).size(); i++) {
-//			//System.err.println(agentPlans.get(5).get(i));
-//		}
+
 		
-		List<HighLevelAction> hlaPlan = client.agentOriginNode.get(0).plannedActions; /// for print purpuse get HLA plan for a specific agent
-//		for(int step = 0; step < hlaPlan.size(); step++) {
-//			////System.err.print(hlaPlan.get(step).toString());
-//		}
-		////System.err.println();
-		
-//		LinkedList<Node> agentPlan = agentLowLevelPlans.get(0); /// print low level plan
-//		for(int step = 0; step < agentPlan.size(); step++) {
-//			////System.err.print(agentPlan.get(step).action.toString() + ",");
-//		}
-//		////System.err.println();
-		
+		List<HighLevelAction> hlaPlan = client.agentOriginNode.get(0).plannedActions; 
+
 		ResponseParser responsePar = new ResponseParser(agentCount);
 		serverMessages.readLine(); // This is called to ignore the initial server message
 		
 		
 		
 		int[] trials = new int[client.initialState.agentCount];
-		
-		
-		
-//		for(int row = 0; row < client.initialState.rows; row++) {
-//			for(int col = 0; col < client.initialState.cols; col++) {
-//				//System.err.print(client.initialState.boxIds[row][col]);
-//			}
-//			//System.err.println();
-//		}
-		////System.err.println(client.agentOriginNode.get(0).goalIds);
 	
-	
-		 
-		
 		 boolean[] replaned = new boolean[client.agentCount] ;
 		 
 		int k=-1;
@@ -1364,19 +1175,18 @@ boolean deadlock = false ;
 		while(true) {
 			
 			k++;
-			 System.err.println("................INTERATION"+k);
-			
-			/// we try not relaxed and then we relax
+		
+		
 			for (int agentNo = 0; agentNo < agentCount; agentNo++) {
-				 System.err.println("Creating a normal plan for: " + agentNo);
-				/// original position inside if statement
+				// System.err.println("Creating a normal plan for: " + agentNo);
+			
 				
 				client.agentOriginNode.get(agentNo).updatePerception(client.perception); // ***// check that it does not affect SA levels
 
 				
 				if(client.IsLowLevelPlanNotConflicting(agentLowLevelPlans)!=-1 && client.IsLowLevelPlanNotConflicting(agentLowLevelPlans)!=agentNo){
 					
-					 System.err.println("Cplan cleared: " + agentNo);
+				//	 System.err.println("Cplan cleared: " + agentNo);
 					
 					agentLowLevelPlans.get(agentNo).clear();
 				}
@@ -1385,13 +1195,13 @@ boolean deadlock = false ;
 			
        
 				if (agentLowLevelPlans.get(agentNo).isEmpty() && !client.agentOriginNode.get(agentNo).blocked) {
-					// //System.err.println(client.agentBeliefs.get(agentNo).action);
+				
 
-					System.err.println("plan for: " + agentNo + " is empty and agent no blocked");
+			//		System.err.println("plan for: " + agentNo + " is empty and agent no blocked");
 
 						client.planNextHLA(agentLowLevelPlans, agentNo, false, false);
 						
-						System.err.println(agentLowLevelPlans.get(agentNo).toString());
+				//		System.err.println(agentLowLevelPlans.get(agentNo).toString());
 						
 
 					if(client.blocker.containsKey(agentNo)){
@@ -1403,7 +1213,7 @@ boolean deadlock = false ;
 					
 					
 					if (agentLowLevelPlans.get(agentNo).isEmpty()){
-					System.err.println("no plan need to relax");
+				//	System.err.println("no plan need to relax");
 						client.planNextHLA(agentLowLevelPlans, agentNo, true, false);
 					}
 					
@@ -1418,10 +1228,7 @@ boolean deadlock = false ;
 			
 			
 			String jointAction = client.formNextJointAction(agentLowLevelPlans);  /// forming join action
-			/// agentlowlevelsPlans for each agent (hashmap)
-			
-//			System.err.println("Agent 0 plannedActions: " + agentLowLevelPlans.get(0).toString());
-			
+
 			System.out.println(jointAction); // send it to the server
 			String response = serverMessages.readLine();
 			
@@ -1450,30 +1257,23 @@ boolean deadlock = false ;
 			}
 			
 			client.deadlockdetector(editedcopyOfResponse);
-			// (boolean[] response, int agent, Node n, HashMap<Integer, LinkedList<Node>> agentLowLevelPlans)
-			
-			
+		
 			boolean flag = true ; // assume only two agents
-			
-			/// assume only two agents otherwise trials should be an array
-			
-			
-			
-			
+		
 			for (int i = 0; i < parsedResponse.length; i++) {
 				if (parsedResponse[i] && !client.deadlock) {
 					RemoveJointAction(agentLowLevelPlans, i);
-				} /// if true remove joint action
+				} 
 				else if (trials[i] == 1) {
 					// replan
-					  System.err.print("Rplaning for agent:" + i);
+				//	  System.err.print("Rplaning for agent:" + i);
 					  
-					Node n = client.agentOriginNode.get(i); /// get the current perception of the nopagent
+					Node n = client.agentOriginNode.get(i); 
 					client.agentOriginNode.get(i).updatePerception(client.perception);
 					
 					
 					agentLowLevelPlans.get(i).clear();
-					//client.planNextHLA(agentLowLevelPlans, i, true,true);
+					
 					replaned[i] = true ;
 					trials[i]++;
 					
@@ -1484,29 +1284,23 @@ boolean deadlock = false ;
 
 				else if (trials[i] > 1 && flag) {
                     
-					Node n = client.agentOriginNode.get(i); /// get the current perception of the nopagent
+					Node n = client.agentOriginNode.get(i); 
 		
 					client.deadlock = false ; 
 					
-					n.updatePerception(client.perception); // This updates the perception of the level; boxes,boxIds and agents rrays are updated
-					/// this statement may have bugs
+					n.updatePerception(client.perception);
 					
-				
-					
-					//System.err.println("Agent " + i + "blocked by " + client.getBlockingObjectType(n, i) + " coordinates"
-						//	+ client.potentialObject[0] + " c:" + client.potentialObject[1]);
 
-					
 					if (client.getBlockingObjectType(n, i).equals("box")) {
 
-						System.err.println("Enter box condition");
+				//		System.err.println("Enter box condition");
 
 						int agentbox = client.getAgentBox(n);
 
 						int highPagent = client.GetHighLowPriorityAgent(n, i, agentbox, "box")[0];
 						int lowPagent = client.GetHighLowPriorityAgent(n, i, agentbox, "box")[1];
 
-						 System.err.println("*High agent:"+highPagent+" , Low agent"+lowPagent);
+					//	 System.err.println("*High agent:"+highPagent+" , Low agent"+lowPagent);
 						
 						if(!client.deadlockhandler(lowPagent, n, agentLowLevelPlans,highPagent,"box")){
 							client.PlanForStoreTemp(n, highPagent, lowPagent, agentLowLevelPlans);
@@ -1518,16 +1312,16 @@ boolean deadlock = false ;
 		    		}
 		    		else if(client.getBlockingObjectType(n,i).equals("agent")){
 		    				    			
-							System.err.println("Enter agent condition");
+						//	System.err.println("Enter agent condition");
 		    			
 							int highPagent = client.GetHighLowPriorityAgent(n, i, client.getOpposingAgent(n), "agent")[0];
 							int lowPagent = client.GetHighLowPriorityAgent(n, i, client.getOpposingAgent(n), "agent")[1];
 		    			
-							   System.err.println("*High agent:"+highPagent+" , Low agent"+lowPagent);
+							//   System.err.println("*High agent:"+highPagent+" , Low agent"+lowPagent);
 							   
 							   
 						if(!client.deadlockhandler(lowPagent, n, agentLowLevelPlans,highPagent,"agent")){
-							  System.err.println("no deadlock");
+						//	  System.err.println("no deadlock");
 							client.PlanForGiveWay(n, highPagent, lowPagent,agentLowLevelPlans);
 						}
 							
@@ -1566,7 +1360,7 @@ boolean deadlock = false ;
 			for(int agentNo = 0; agentNo < agentCount; agentNo++) {
 				Node n = client.agentOriginNode.get(agentNo);
 				if(n.plannedActions.isEmpty() && agentLowLevelPlans.get(agentNo).isEmpty()) {
-					n.checkHLAs();	// Checks whether the past SatisfyGoalAction is still satisfied. If not, it's added back to the plannedActions of the agent.
+					n.checkHLAs();	
 					if(n.plannedActions.isEmpty()) {
 						noOfEmptyPlans += 1;
 					}
